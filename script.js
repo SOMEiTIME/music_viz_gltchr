@@ -1,6 +1,5 @@
 let audio1 = new Audio();
 audio1.src = "THE FEAR.mp3";
-audio1.src = "music.mp3";
 
 //initialize canvas, container
 const container = document.getElementById("container");
@@ -22,7 +21,7 @@ analyser = audioCtx.createAnalyser();
 audioSource.connect(analyser);
 analyser.connect(audioCtx.destination);
 
-analyser.fftSize = 64;
+analyser.fftSize = 128;
 const bufferLength = analyser.frequencyBinCount;
 const dataArray = new Uint8Array(bufferLength);
 const barWidth = canvas.width / bufferLength;
@@ -35,8 +34,8 @@ function animate() {
     analyser.getByteFrequencyData(dataArray);
     for (let i = 0; i < bufferLength; i++) {
         barHeight = dataArray[i];
-        ctx.fillStyle = "grey";
-        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        ctx.fillStyle = "white";
+        ctx.fillRect(x, canvas.height - 2 * barHeight, barWidth - barWidth/3, barHeight);
         x += barWidth;
     }
 
