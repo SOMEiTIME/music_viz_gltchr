@@ -1,5 +1,8 @@
 let audio1 = new Audio();
 audio1.src = "THE FEAR.mp3";
+let video1 = document.getElementById("video");
+video1.src = "pool.mp4";
+video1.type = "video/mp4";
 
 //initialize canvas, container
 const container = document.getElementById("container");
@@ -14,6 +17,7 @@ let audioSource = null;
 let analyser = null;
 
 audio1.play();
+video1.play();
 
 //create analyizer
 audioSource = audioCtx.createMediaElementSource(audio1);
@@ -29,17 +33,17 @@ const barWidth = canvas.width / bufferLength;
 //animate
 let x = 0;
 function animate() {
-    x = 0;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    analyser.getByteFrequencyData(dataArray);
-    for (let i = 0; i < bufferLength; i++) {
-        barHeight = dataArray[i];
-        ctx.fillStyle = "white";
-        ctx.fillRect(x, canvas.height - 2 * barHeight, barWidth - barWidth/3, barHeight);
-        x += barWidth;
-    }
+  x = 0;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  analyser.getByteFrequencyData(dataArray);
+  for (let i = 0; i < bufferLength; i++) {
+    barHeight = dataArray[i];
+    ctx.fillStyle = "black";
+    ctx.fillRect(x, canvas.height - 2 * barHeight, barWidth - barWidth/3, barHeight);
+    x += barWidth;
+  }
 
-    requestAnimationFrame(animate);
+  requestAnimationFrame(animate);
 }
 
 animate();
