@@ -29,17 +29,17 @@ const barWidth = canvas.width / bufferLength;
 //animate
 let x = 0;
 function animate() {
-    x = 0;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    analyser.getByteFrequencyData(dataArray);
-    for (let i = 0; i < bufferLength; i++) {
-        barHeight = dataArray[i];
-        ctx.fillStyle = "white";
-        ctx.fillRect(x, canvas.height - 2 * barHeight, barWidth - barWidth/3, barHeight);
-        x += barWidth;
-    }
+  x = 0;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  analyser.getByteFrequencyData(dataArray);
+  for (let i = 0; i < bufferLength; i++) {
+    barHeight = dataArray[i];
+    ctx.fillStyle = "black";
+    ctx.fillRect(x, canvas.height - 2 * barHeight, barWidth - barWidth/3, barHeight);
+    x += barWidth;
+  }
 
-    requestAnimationFrame(animate);
+  requestAnimationFrame(animate);
 }
 
 animate();
