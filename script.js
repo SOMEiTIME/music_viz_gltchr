@@ -1,5 +1,8 @@
 let audio1 = new Audio();
 audio1.src = "THE FEAR.mp3";
+let video1 = document.getElementById("video");
+video1.src = "pool.mp4";
+video1.type = "video/mp4";
 
 //initialize canvas, container
 const container = document.getElementById("container");
@@ -14,6 +17,7 @@ let audioSource = null;
 let analyser = null;
 
 audio1.play();
+video1.play();
 
 //create analyizer
 audioSource = audioCtx.createMediaElementSource(audio1);

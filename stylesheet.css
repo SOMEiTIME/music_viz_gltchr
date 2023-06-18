@@ -17,7 +17,8 @@
 }
 
 #video {
+  object-position: center;
   object-fit: fill;
-  width: canvas.width;
-  height: canvas.height;
+  width: 100%;
+  height: 100%;
 }
