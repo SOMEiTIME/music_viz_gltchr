@@ -9,10 +9,12 @@ const container = document.getElementById("container");
 const canvas = document.getElementById("canvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
+const canvasContext = canvas.getContext("2d");
 
-const ctx = canvas.getContext("2d");
+const offscreenCanvas = new OffscreenCanvas(canvas.width, canvas.height);
+const offscreenContext = offscreenCanvas.getContext("2d");
 
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let audioSource = null;
 let analyser = null;
 
@@ -20,30 +22,48 @@ audio1.play();
 video1.play();
 
 //create analyizer
-audioSource = audioCtx.createMediaElementSource(audio1);
-analyser = audioCtx.createAnalyser();
+audioSource = audioContext.createMediaElementSource(audio1);
+analyser = audioContext.createAnalyser();
 audioSource.connect(analyser);
-analyser.connect(audioCtx.destination);
+analyser.connect(audioContext.destination);
 
-analyser.fftSize = 128;
+analyser.fftSize = 32;
 const bufferLength = analyser.frequencyBinCount;
-const dataArray = new Uint8Array(bufferLength);
+const soundDataArray = new Uint8Array(bufferLength);
 const barWidth = canvas.width / bufferLength;
+
+const fps = 60;
 
 //animate
 let x = 0;
 function animate() {
   x = 0;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  analyser.getByteFrequencyData(dataArray);
+  offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height)
+  let frame = offscreenContext.getImageData(0, 0, canvas.width, canvas.height);
+  const frameData = frame.data;
+
+  canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+  analyser.getByteFrequencyData(soundDataArray);
+  
+  for (let i = 0; i < frameData.length; i += 1) {
+    barHeight = soundDataArray[Math.round(bufferLength / i)];
+    frameData[i] = frameData[i + barHeight] + barHeight * .5;
+    i = i + 1;
+  }
+
+  canvasContext.putImageData(frame, 0, 0);
+
   for (let i = 0; i < bufferLength; i++) {
-    barHeight = dataArray[i];
-    ctx.fillStyle = "black";
-    ctx.fillRect(x, canvas.height - 2 * barHeight, barWidth - barWidth/3, barHeight);
+    barHeight = soundDataArray[i];
+    canvasContext.fillStyle = "grey";
+
+    canvasContext.fillRect(x, canvas.height - 2 * barHeight, barWidth - barWidth/3, barHeight);
     x += barWidth;
   }
 
-  requestAnimationFrame(animate);
+  setTimeout(() => {
+    requestAnimationFrame(animate);
+  }, 1000 / fps);
 }
 
 animate();
