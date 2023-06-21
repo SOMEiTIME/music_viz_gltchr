@@ -34,6 +34,28 @@ const barWidth = canvas.width / bufferLength;
 
 const fps = 120;
 
+let gapMultiplier = .05; //multiplied by barHeight
+let frameDataIncrement = 4; //important, changes the colors - 4
+let framDataGapMultiplier = 1; //multiplied by barHeight
+let frameDataOffsetMultiplier = .5; //multiplied by barHeight
+let framDataHighCutoff = 250;
+let frameDataLowCutoff = 50;
+let frameDataEmptyVal = 0;
+
+let adjustedGapMultiplier = .1;
+let vizBarHeightMultiplier = 2;
+
+function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
+  if (val > maxVal) {
+    null//return maxVal;
+  }
+  if (val < minVal) {
+    return minVal;
+  }
+
+  return val;
+}
+
 //animate
 let x = 0;
 function animate() {
@@ -55,7 +77,6 @@ function animate() {
   }
   canvasContext.putImageData(frame, 0, 0); 
   */
-  canvasContext.fillRect("black", 0, 0, canvas.width, canvas.height);
 
   for (let i = 0; i < bufferLength; i++) {
     barHeight = soundDataArray[i];
@@ -63,20 +84,23 @@ function animate() {
       barHeight = 1;
     }
 
-    let frame = offscreenContext.getImageData(x, 0 + barHeight * .1, barWidth - barHeight * .1, canvas.height);
+    let imageY = checkExtremes(0 + barHeight * gapMultiplier, canvas.height);
+    let imageWidth = checkExtremes(barWidth - barHeight * gapMultiplier, canvas.height);
+
+    let frame = offscreenContext.getImageData(x, imageY, imageWidth, canvas.height);
+
     let frameData = frame.data;
-    for (let k = 0; k < frameData.length; k += 4) {
-      let newVal = frameData[k + barHeight] + barHeight * .3;
-      if (newVal > 250 || newVal < 50) {
-        newVal = 0;
+    for (let k = 0; k < frameData.length; k += frameDataIncrement) {
+      let newVal = frameData[k + (barHeight * framDataGapMultiplier)] + barHeight * frameDataOffsetMultiplier;
+      if (newVal > framDataHighCutoff || newVal < frameDataLowCutoff) {
+        newVal = frameDataEmptyVal;
       }
       frameData[k] = newVal
     }
 
-    canvasContext.putImageData(frame, x + barHeight * .01, 0);
-    canvasContext.putImageData(frame, x, canvas.height - 2 * barHeight);
+    canvasContext.putImageData(frame, x + (barHeight * adjustedGapMultiplier), 0);
+    canvasContext.putImageData(frame, x, canvas.height - (vizBarHeightMultiplier * barHeight));
     //draw rectangles
-    canvasContext.fillStyle = "white";
     //canvasContext.fillRect(x, canvas.height - 2 * barHeight, barWidth - barWidth/3, barHeight);
     x += barWidth;
   }
