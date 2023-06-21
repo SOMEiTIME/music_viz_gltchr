@@ -23,27 +23,30 @@ video1.play();
 
 //create analyizer
 audioSource = audioContext.createMediaElementSource(audio1);
-analyser = audioContext.createAnalyser();
+analyser = new AnalyserNode(audioContext);
 audioSource.connect(analyser);
 analyser.connect(audioContext.destination);
 
-analyser.fftSize = 32;
+analyser.fftSize = 32; //32
+analyser.smoothingTimeConstant = .8; //.8
+analyser.maxDecibels = -30; //-30
+analyser.minDecibels = -100; //-100
 const bufferLength = analyser.frequencyBinCount;
 const soundDataArray = new Uint8Array(bufferLength);
 const barWidth = canvas.width / bufferLength;
 
-const fps = 120;
+const fps = 120; //120
 
-let gapMultiplier = .05; //multiplied by barHeight
-let frameDataIncrement = 4; //important, changes the colors - 4
-let framDataGapMultiplier = 1; //multiplied by barHeight
-let frameDataOffsetMultiplier = .5; //multiplied by barHeight
-let framDataHighCutoff = 250;
-let frameDataLowCutoff = 50;
-let frameDataEmptyVal = 0;
+let gapMultiplier = .1; //multiplied by barHeight //.1
+let frameDataIncrement = 4; //important, changes the colors //4
+let framDataGapMultiplier = 1; //multiplied by barHeight //1
+let frameDataOffsetMultiplier = .5; //multiplied by barHeight //.5
+let framDataHighCutoff = 250; //250
+let frameDataLowCutoff = 50; //50
+let frameDataEmptyVal = 0; //0
 
-let adjustedGapMultiplier = .1;
-let vizBarHeightMultiplier = 2;
+let adjustedGapMultiplier = .1; //.1
+let vizBarHeightMultiplier = 2; //2
 
 function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
   if (val > maxVal) {
