@@ -58,7 +58,8 @@ function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
 
   return val;
 }
-
+const inputFrameDataGapMultiplier = document.getElementById("framDataGapMultiplier");
+const input_frameDataIncrement = document.getElementById("frameDataIncrement");
 //animate
 let x = 0;
 function animate() {
@@ -66,6 +67,10 @@ function animate() {
   offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height)
   analyser.getByteFrequencyData(soundDataArray);
 
+  if (inputFrameDataGapMultiplier != null)
+    framDataGapMultiplier = inputFrameDataGapMultiplier.valueAsNumber;
+  if (input_frameDataIncrement != null)
+    frameDataIncrement = input_frameDataIncrement.valueAsNumber;
   /*
   //processes the entire image, shifting the colors
   canvasContext.clearRect(0, 0, canvas.width, canvas.height);
@@ -98,7 +103,7 @@ function animate() {
       if (newVal > framDataHighCutoff || newVal < frameDataLowCutoff) {
         newVal = frameDataEmptyVal;
       }
-      frameData[k] = newVal
+      frameData[k] = newVal;
     }
 
     canvasContext.putImageData(frame, x + (barHeight * adjustedGapMultiplier), 0);
@@ -111,6 +116,18 @@ function animate() {
   setTimeout(() => {
     requestAnimationFrame(animate);
   }, 1000 / fps);
+}
+
+function onChangeFrameDataIncrement(val) {
+  frameDataIncrement = val;
+}
+
+function input_gapMultiplier(val) {
+  gapMultiplier = val;
+}
+
+function input_framDataGapMultiplier(val) {
+  framDataGapMultiplier = val;
 }
 
 animate();

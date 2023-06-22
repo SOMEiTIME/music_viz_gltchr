@@ -32,14 +32,20 @@
     <p>Settings:</p>
     <div>
       <input type="range" id="frameDataIncrement" name="frameDataIncrement"
-             min="2" max="10" value = "4" step="1">
+             min="2" max="10" value = "4" step="1" oninput="onChangeFrameDataIncrement(this.valueAsNumber)">
       <label for="frameDataIncrement">Color</label>
     </div>
 
     <div>
       <input type="range" id="framDataGapMultiplier" name="framDataGapMultiplier" 
-             min="0" max="2" value="1" step=".1">
+             min="0" max="2" value="1" step=".01" oninput="input_framDataGapMultiplier(this.valueAsNumber)">
       <label for="framDataGapMultiplier">Music Responsiveness</label>
+    </div>
+
+    <div>
+      <input type="range" id="gapMultiplier" name="gapMultiplier"
+             min="0" max="1" value=".9" step=".01" oninput="input_gapMultiplier(this.valueAsNumber)">
+      <label for="framDataGapMultiplier">Gap</label>
     </div>
 
     </ul>
