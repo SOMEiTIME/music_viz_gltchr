@@ -4,6 +4,7 @@
     <link rel="stylesheet" href="stylesheet.css" />
     <title>Music Visualizer GLTCHR</title>
   </head>
+
   <body>
     <div id="container">
       <canvas id="canvas"></canvas>
@@ -19,4 +20,28 @@
     </div>
     <script src="script.js"></script>
   </body>
+
+ <input type="checkbox" class="openSidebarMenu" id="openSidebarMenu">
+  <label for="openSidebarMenu" class="sidebarIconToggle">
+    <div class="spinner diagonal part-1"></div>
+    <div class="spinner horizontal"></div>
+    <div class="spinner diagonal part-2"></div>
+  </label>
+  <div id="sidebarMenu">
+    <ul class="sidebarMenuInner">
+    <p>Settings:</p>
+    <div>
+      <input type="range" id="frameDataIncrement" name="frameDataIncrement"
+             min="2" max="10" value = "4" step="1">
+      <label for="frameDataIncrement">Color</label>
+    </div>
+
+    <div>
+      <input type="range" id="framDataGapMultiplier" name="framDataGapMultiplier" 
+             min="0" max="2" value="1" step=".1">
+      <label for="framDataGapMultiplier">Music Responsiveness</label>
+    </div>
+
+    </ul>
+  </div>
 </html>

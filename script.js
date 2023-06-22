@@ -37,7 +37,7 @@ const barWidth = canvas.width / bufferLength;
 
 const fps = 120; //120
 
-let gapMultiplier = .1; //multiplied by barHeight //.1
+let gapMultiplier = .09; //multiplied by barHeight //.1
 let frameDataIncrement = 4; //important, changes the colors //4
 let framDataGapMultiplier = 1; //multiplied by barHeight //1
 let frameDataOffsetMultiplier = .5; //multiplied by barHeight //.5
