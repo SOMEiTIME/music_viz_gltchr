@@ -4,6 +4,7 @@
     <link rel="stylesheet" href="stylesheet.css" />
     <title>Music Visualizer GLTCHR</title>
   </head>
+
   <body>
     <div id="container">
       <canvas id="canvas"></canvas>
@@ -19,4 +20,70 @@
     </div>
     <script src="script.js"></script>
   </body>
+
+ <input type="checkbox" class="openSidebarMenu" id="openSidebarMenu">
+  <label for="openSidebarMenu" class="sidebarIconToggle">
+    <div class="spinner diagonal part-1"></div>
+    <div class="spinner horizontal"></div>
+    <div class="spinner diagonal part-2"></div>
+  </label>
+  <div id="sidebarMenu">
+    <ul class="sidebarMenuInner">
+    <p>Settings:</p>
+    <div>
+      <input type="range" id="frameDataIncrement" name="frameDataIncrement"
+             min="2" max="10" value = "4" step="1" oninput="input(this.valueAsNumber, this.id)">
+      <label for="frameDataIncrement">Color</label>
+    </div>
+
+    <div>
+      <input type="range" id="gapMultiplier" name="gapMultiplier"
+             min="0" max="1" value=".9" step=".01" oninput="input(this.valueAsNumber, this.id)">
+      <label for="gapMultiplier">Gap</label>
+    </div>
+
+    <div>
+      <input type="range" id="frameDataGapMultiplier" name="frameDataGapMultiplier"
+             min="0" max="5" value="1" step=".25" oninput="input(this.valueAsNumber, this.id)">
+      <label for="frameDataGapMultiplier">Response</label>
+    </div>
+
+    <div>
+      <input type="range" id="frameDataOffsetMultiplier" name="frameDataOffsetMultiplier"
+             min="0" max="2" value=".5" step=".1" oninput="input(this.valueAsNumber, this.id)">
+      <label for="frameDataOffsetMultiplier">Visual Offset</label>
+    </div>
+
+    <div>
+      <input type="range" id="frameDataHighCutoff" name="frameDataHighCutoff"
+             min="0" max="255" value="200" step="1" oninput="input(this.valueAsNumber, this.id)">
+      <label for="frameDataHighCutoff">High End</label>
+    </div>
+
+    <div>
+      <input type="range" id="frameDataLowCutoff" name="frameDataLowCutoff"
+             min="0" max="255" value="50" step="1" oninput="input(this.valueAsNumber, this.id)">
+      <label for="frameDataLowCutoff">Low End</label>
+    </div>
+
+    <div>
+      <input type="range" id="frameDataEmptyVal" name="frameDataEmptyVal"
+             min="0" max="255" value="0" step="1" oninput="input(this.valueAsNumber, this.id)">
+      <label for="frameDataEmptyVal">Fill In</label>
+    </div>
+
+    <div>
+      <input type="range" id="adjustedGapMultiplier" name="adjustedGapMultiplier"
+             min="0" max="1" value=".1" step=".05" oninput="input(this.valueAsNumber, this.id)">
+      <label for="adjustedGapMultiplier">Fidget</label>
+    </div>
+
+    <div>
+      <input type="range" id="vizBarHeightMultiplier" name="vizBarHeightMultiplier"
+             min="0" max="6" value="2" step=".05" oninput="input(this.valueAsNumber, this.id)">
+      <label for="adjustedGapMultiplier">Bars</label>
+    </div>
+
+    </ul>
+  </div>
 </html>

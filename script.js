@@ -1,7 +1,7 @@
 let audio1 = new Audio();
-audio1.src = "THE FEAR.mp3";
+audio1.src = "02 Cool Blue.mp3";
 let video1 = document.getElementById("video");
-video1.src = "pool.mp4";
+video1.src = "plane.mp4";
 video1.type = "video/mp4";
 
 //initialize canvas, container
@@ -23,16 +23,49 @@ video1.play();
 
 //create analyizer
 audioSource = audioContext.createMediaElementSource(audio1);
-analyser = audioContext.createAnalyser();
+analyser = new AnalyserNode(audioContext);
 audioSource.connect(analyser);
 analyser.connect(audioContext.destination);
 
-analyser.fftSize = 32;
+analyser.fftSize = 32; //32
+analyser.smoothingTimeConstant = .8; //.8
+analyser.maxDecibels = -30; //-30
+analyser.minDecibels = -100; //-100
 const bufferLength = analyser.frequencyBinCount;
 const soundDataArray = new Uint8Array(bufferLength);
 const barWidth = canvas.width / bufferLength;
 
-const fps = 120;
+const fps = 120; //120
+
+
+let settings = {
+  "frameDataIncrement": 2,
+  "gapMultiplier": .09, //multiplied by barHeight //.1
+  "frameDataGapMultiplier": 1, //multiplied by barHeight //1
+  "frameDataOffsetMultiplier": .5, //multiplied by barHeight //.5
+  "frameDataHighCutoff": 250, //250
+  "frameDataLowCutoff": 50, //50
+  "frameDataEmptyVal": 0, //0
+
+  "adjustedGapMultiplier": .1, //.1
+  "vizBarHeightMultiplier": 2, //2
+}
+
+/*
+function updateSettings() {
+  Object.keys(settings).map(name => settings[name] = document.getElementById(name));
+}*/
+
+function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
+  if (val > maxVal) {
+    null//return maxVal;
+  }
+  if (val < minVal) {
+    return minVal;
+  }
+
+  return val;
+}
 
 //animate
 let x = 0;
@@ -55,7 +88,6 @@ function animate() {
   }
   canvasContext.putImageData(frame, 0, 0); 
   */
-  canvasContext.fillRect("black", 0, 0, canvas.width, canvas.height);
 
   for (let i = 0; i < bufferLength; i++) {
     barHeight = soundDataArray[i];
@@ -63,20 +95,23 @@ function animate() {
       barHeight = 1;
     }
 
-    let frame = offscreenContext.getImageData(x, 0 + barHeight * .1, barWidth - barHeight * .1, canvas.height);
+    let imageY = checkExtremes(0 + barHeight * settings.gapMultiplier, canvas.height);
+    let imageWidth = checkExtremes(barWidth - barHeight * settings.gapMultiplier, canvas.height);
+
+    let frame = offscreenContext.getImageData(x, imageY, imageWidth, canvas.height);
+
     let frameData = frame.data;
-    for (let k = 0; k < frameData.length; k += 4) {
-      let newVal = frameData[k + barHeight] + barHeight * .3;
-      if (newVal > 250 || newVal < 50) {
-        newVal = 0;
+    for (let k = 0; k < frameData.length; k += settings.frameDataIncrement) {
+      let newVal = frameData[k + (barHeight * settings.frameDataGapMultiplier)] + barHeight * settings.frameDataOffsetMultiplier;
+      if (newVal > settings.frameDataHighCutoff || newVal < settings.frameDataLowCutoff) {
+        newVal = settings.frameDataEmptyVal;
       }
-      frameData[k] = newVal
+      frameData[k] = newVal;
     }
 
-    canvasContext.putImageData(frame, x + barHeight * .01, 0);
-    canvasContext.putImageData(frame, x, canvas.height - 2 * barHeight);
+    canvasContext.putImageData(frame, x + (barHeight * settings.adjustedGapMultiplier), 0);
+    canvasContext.putImageData(frame, x, canvas.height - (settings.vizBarHeightMultiplier * barHeight));
     //draw rectangles
-    canvasContext.fillStyle = "white";
     //canvasContext.fillRect(x, canvas.height - 2 * barHeight, barWidth - barWidth/3, barHeight);
     x += barWidth;
   }
@@ -86,4 +121,13 @@ function animate() {
   }, 1000 / fps);
 }
 
+function input(val, name) {
+  settings[name] = val;
+}
+
+/*document.onLoad = function() {
+  updateSettings();
+}*/
+
+//updateSettings();
 animate();
