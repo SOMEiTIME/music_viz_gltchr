@@ -1,7 +1,7 @@
 let audio1 = new Audio();
-audio1.src = "THE FEAR.mp3";
+audio1.src = "02 Cool Blue.mp3";
 let video1 = document.getElementById("video");
-video1.src = "pool.mp4";
+video1.src = "plane.mp4";
 video1.type = "video/mp4";
 
 //initialize canvas, container
@@ -37,16 +37,24 @@ const barWidth = canvas.width / bufferLength;
 
 const fps = 120; //120
 
-let gapMultiplier = .09; //multiplied by barHeight //.1
-let frameDataIncrement = 4; //important, changes the colors //4
-let framDataGapMultiplier = 1; //multiplied by barHeight //1
-let frameDataOffsetMultiplier = .5; //multiplied by barHeight //.5
-let framDataHighCutoff = 250; //250
-let frameDataLowCutoff = 50; //50
-let frameDataEmptyVal = 0; //0
 
-let adjustedGapMultiplier = .1; //.1
-let vizBarHeightMultiplier = 2; //2
+let settings = {
+  "frameDataIncrement": 2,
+  "gapMultiplier": .09, //multiplied by barHeight //.1
+  "frameDataGapMultiplier": 1, //multiplied by barHeight //1
+  "frameDataOffsetMultiplier": .5, //multiplied by barHeight //.5
+  "frameDataHighCutoff": 250, //250
+  "frameDataLowCutoff": 50, //50
+  "frameDataEmptyVal": 0, //0
+
+  "adjustedGapMultiplier": .1, //.1
+  "vizBarHeightMultiplier": 2, //2
+}
+
+/*
+function updateSettings() {
+  Object.keys(settings).map(name => settings[name] = document.getElementById(name));
+}*/
 
 function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
   if (val > maxVal) {
@@ -58,8 +66,7 @@ function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
 
   return val;
 }
-const inputFrameDataGapMultiplier = document.getElementById("framDataGapMultiplier");
-const input_frameDataIncrement = document.getElementById("frameDataIncrement");
+
 //animate
 let x = 0;
 function animate() {
@@ -67,10 +74,6 @@ function animate() {
   offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height)
   analyser.getByteFrequencyData(soundDataArray);
 
-  if (inputFrameDataGapMultiplier != null)
-    framDataGapMultiplier = inputFrameDataGapMultiplier.valueAsNumber;
-  if (input_frameDataIncrement != null)
-    frameDataIncrement = input_frameDataIncrement.valueAsNumber;
   /*
   //processes the entire image, shifting the colors
   canvasContext.clearRect(0, 0, canvas.width, canvas.height);
@@ -92,22 +95,22 @@ function animate() {
       barHeight = 1;
     }
 
-    let imageY = checkExtremes(0 + barHeight * gapMultiplier, canvas.height);
-    let imageWidth = checkExtremes(barWidth - barHeight * gapMultiplier, canvas.height);
+    let imageY = checkExtremes(0 + barHeight * settings.gapMultiplier, canvas.height);
+    let imageWidth = checkExtremes(barWidth - barHeight * settings.gapMultiplier, canvas.height);
 
     let frame = offscreenContext.getImageData(x, imageY, imageWidth, canvas.height);
 
     let frameData = frame.data;
-    for (let k = 0; k < frameData.length; k += frameDataIncrement) {
-      let newVal = frameData[k + (barHeight * framDataGapMultiplier)] + barHeight * frameDataOffsetMultiplier;
-      if (newVal > framDataHighCutoff || newVal < frameDataLowCutoff) {
-        newVal = frameDataEmptyVal;
+    for (let k = 0; k < frameData.length; k += settings.frameDataIncrement) {
+      let newVal = frameData[k + (barHeight * settings.frameDataGapMultiplier)] + barHeight * settings.frameDataOffsetMultiplier;
+      if (newVal > settings.frameDataHighCutoff || newVal < settings.frameDataLowCutoff) {
+        newVal = settings.frameDataEmptyVal;
       }
       frameData[k] = newVal;
     }
 
-    canvasContext.putImageData(frame, x + (barHeight * adjustedGapMultiplier), 0);
-    canvasContext.putImageData(frame, x, canvas.height - (vizBarHeightMultiplier * barHeight));
+    canvasContext.putImageData(frame, x + (barHeight * settings.adjustedGapMultiplier), 0);
+    canvasContext.putImageData(frame, x, canvas.height - (settings.vizBarHeightMultiplier * barHeight));
     //draw rectangles
     //canvasContext.fillRect(x, canvas.height - 2 * barHeight, barWidth - barWidth/3, barHeight);
     x += barWidth;
@@ -118,16 +121,13 @@ function animate() {
   }, 1000 / fps);
 }
 
-function onChangeFrameDataIncrement(val) {
-  frameDataIncrement = val;
+function input(val, name) {
+  settings[name] = val;
 }
 
-function input_gapMultiplier(val) {
-  gapMultiplier = val;
-}
+/*document.onLoad = function() {
+  updateSettings();
+}*/
 
-function input_framDataGapMultiplier(val) {
-  framDataGapMultiplier = val;
-}
-
+//updateSettings();
 animate();
