@@ -84,6 +84,16 @@
       <label for="adjustedGapMultiplier">Bars</label>
     </div>
 
+    <form>
+      <label for="videoUpload">Video file</label>
+      <input type="file" id="videoUpload" accept="video/mp4" oninput="updateVideoDisplay(this.files)"/>
+    </form>
+
+    <form>
+      <label for="audioUpload">Audio file</label>
+      <input type="file" id="audioUpload" accept="audio/mp3" oninput="updateAudioDisplay(this.files)"/>
+    </form>
+
     </ul>
   </div>
 </html>
