@@ -2,9 +2,9 @@ const videoInput = document.getElementById("videoUpload");
 const audioInput = document.querySelector("audioUpload");
 
 let audio1 = new Audio();
-//audio1.src = "Christophe Aline.mp3";
+audio1.src = "02 Cool Blue.mp3";
 const video1 = document.getElementById("video");
-//video1.src = "plane.mp4";
+video1.src = "plane.mp4";
 video1.type = "video/mp4";
 
 //initialize canvas, container
@@ -129,17 +129,21 @@ function input(val, name) {
 }
 
 function updateVideoDisplay(files) {
+  var oldSrc = video1.src;
   var objectURL = URL.createObjectURL(files[0]);
   video1.src = objectURL;
   video1.load();
   video1.play();
+  URL.revokeObjectURL(oldSrc);
 }
 
 function updateAudioDisplay(files) {
+  var oldSrc = audio1.src;
   var objectURL = URL.createObjectURL(files[0]);
   audio1.src = objectURL;
   audio1.load();
   audio1.play();
+  URL.revokeObjectURL(oldSrc);
 }
 
 document.onLoad = function() {
