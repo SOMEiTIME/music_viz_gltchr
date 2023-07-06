@@ -204,8 +204,9 @@ function setToFavorite(presetName) {
 
     //update all the sliders
     Object.keys(settings).forEach(name => {
-      if (settings[name] != null) {
-        document.getElementById(name).value = settings[name];
+      let input = document.getElementById(name);
+      if (settings[name] != null && input != null) {
+        input.value = settings[name];
       }
     });
   }
