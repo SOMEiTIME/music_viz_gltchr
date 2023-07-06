@@ -52,12 +52,16 @@ let settings = {
 
   "adjustedGapMultiplier": .1, //.1
   "vizBarHeightMultiplier": 2, //2
+  /*while these can't be directly re-used from storage like the previous settings, it's
+    handy to keep them around for revoking URLs
+  */
+  "videoSrc": video1.src,
+  "audioSrc": audio1.src,
 }
 
-/*
-function updateSettings() {
-  Object.keys(settings).map(name => settings[name] = document.getElementById(name));
-}*/
+function copySettings(newSettings) {
+  Object.keys(settings).map(name => settings[name] = newSettings[name]);
+}
 
 function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
   if (val > maxVal) {
@@ -124,31 +128,102 @@ function animate() {
   }, 1000 / fps);
 }
 
+/*Inputs (sliders/upload) */
 function input(val, name) {
   settings[name] = val;
+  populateStorage();
 }
 
 function updateVideoDisplay(files) {
-  var oldSrc = video1.src;
+  var oldSrc = settings.videoSrc;
   var objectURL = URL.createObjectURL(files[0]);
   video1.src = objectURL;
+  settings.videoSrc = objectURL;
   video1.load();
   video1.play();
   URL.revokeObjectURL(oldSrc);
+  populateStorage();
 }
 
 function updateAudioDisplay(files) {
-  var oldSrc = audio1.src;
-  var objectURL = URL.createObjectURL(files[0]);
+  var objectURL = settings.audioSrc;
+  var oldSrc = settings.audioSrc;
+
+  if (files != null) {
+    objectURL = URL.createObjectURL(files[0]);
+    URL.revokeObjectURL(oldSrc);
+  }
+
   audio1.src = objectURL;
+  settings.audioSrc = objectURL;
+
   audio1.load();
   audio1.play();
-  URL.revokeObjectURL(oldSrc);
+  populateStorage();
 }
 
-document.onLoad = function() {
+/* Storage Initialization*/
+if (!localStorage.getItem("current")) {
+  populateStorage();
+} else {
   updateSettings();
 }
 
-//updateSettings();
-animate();
+function populateStorage() {
+  localStorage.setItem("current", JSON.stringify(settings));
+  updateSettings();
+}
+
+function updateSettings() {
+  copySettings(JSON.parse(localStorage.getItem("current")));
+}
+
+function addFavorite() {
+  let inputText = document.getElementById("presetName")
+  let presetName = inputText.value;
+  let message = "Preset: '" + presetName;
+  //if the preset already exists, overwrite it
+  if (localStorage.getItem(presetName) != null) {
+    localStorage.removeItem(presetName);
+    message = message + "' updated"
+  } else {
+    let presetSelect = document.getElementById("presetSelect");
+    presetSelect.options[presetSelect.options.length] = new Option(presetName,presetName);
+    message = message + "' saved"
+  }
+  localStorage.setItem(presetName, JSON.stringify(settings));
+  inputText.value = "";
+  inputText.placeholder = message;
+}
+
+function setToFavorite(presetName) {
+  let newSettings = localStorage.getItem(presetName);
+  if (newSettings != null) {
+    copySettings(JSON.parse(newSettings));
+    populateStorage();
+
+    //update all the sliders
+    Object.keys(settings).forEach(name => {
+      if (settings[name] != null) {
+        document.getElementById(name).value = settings[name];
+      }
+    });
+  }
+}
+
+function loadSelections() {
+  let presetSelect = document.getElementById("presetSelect");
+  for (let index = 0; index < localStorage.length; index++) {
+    //add the names of each stored settings to the options bar
+    let presetName = localStorage.key(index);
+    if (presetName != "current") {
+      presetSelect.options[presetSelect.options.length] = new Option(localStorage.key(index), localStorage.key(index), index);
+    }
+  }
+}
+
+
+window.onload = (event) => {
+  animate();
+  loadSelections();
+}
