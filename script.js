@@ -30,28 +30,29 @@ analyser = new AnalyserNode(audioContext);
 audioSource.connect(analyser);
 analyser.connect(audioContext.destination);
 
-analyser.fftSize = 32; //32
-analyser.smoothingTimeConstant = .8; //.8
-analyser.maxDecibels = -30; //-30
-analyser.minDecibels = -100; //-100
+analyser.fftSize = 32;
+analyser.smoothingTimeConstant = .8;
+analyser.maxDecibels = -30;
+analyser.minDecibels = -100;
 const bufferLength = analyser.frequencyBinCount;
 const soundDataArray = new Uint8Array(bufferLength);
 const barWidth = canvas.width / bufferLength;
 
-const fps = 120; //120
+const fps = 120;
 
 
 let settings = {
   "frameDataIncrement": 2,
-  "gapMultiplier": .09, //multiplied by barHeight //.1
-  "frameDataGapMultiplier": 1, //multiplied by barHeight //1
-  "frameDataOffsetMultiplier": .5, //multiplied by barHeight //.5
-  "frameDataHighCutoff": 250, //250
-  "frameDataLowCutoff": 50, //50
-  "frameDataEmptyVal": 0, //0
+  "gapMultiplier": .09, //multiplied by barHeight
+  "frameDataGapMultiplier": 1, //multiplied by barHeight
+  "frameDataOffsetMultiplier": .5, //multiplied by barHeight
+  "frameDataHighCutoff": 250,
+  "frameDataLowCutoff": 50,
+  "frameDataEmptyVal": 0,
 
-  "adjustedGapMultiplier": .1, //.1
-  "vizBarHeightMultiplier": 2, //2
+  "adjustedGapMultiplier": .1,
+  "vizBarHeightMultiplier": 2,
+
   /*while these can't be directly re-used from storage like the previous settings, it's
     handy to keep them around for revoking URLs
   */
@@ -65,7 +66,7 @@ function copySettings(newSettings) {
 
 function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
   if (val > maxVal) {
-    null//return maxVal;
+    return maxVal;
   }
   if (val < minVal) {
     return minVal;
@@ -76,25 +77,11 @@ function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
 
 //animate
 let x = 0;
+
 function animate() {
   x = 0;
-  offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height)
+  offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height);
   analyser.getByteFrequencyData(soundDataArray);
-
-  /*
-  //processes the entire image, shifting the colors
-  canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-  let frame = offscreenContext.getImageData(0, 0, canvas.width, canvas.height);
-  const frameData = frame.data;
-
-  analyser.getByteFrequencyData(soundDataArray);
-  for (let i = 0; i < frameData.length; i += 1) {
-    barHeight = soundDataArray[Math.round(bufferLength / i)];
-    frameData[i] = frameData[i + barHeight] + barHeight * .5;
-    i = i + 1;
-  }
-  canvasContext.putImageData(frame, 0, 0); 
-  */
 
   for (let i = 0; i < bufferLength; i++) {
     barHeight = soundDataArray[i];
@@ -109,17 +96,19 @@ function animate() {
 
     let frameData = frame.data;
     for (let k = 0; k < frameData.length; k += settings.frameDataIncrement) {
-      let newVal = frameData[k + (barHeight * settings.frameDataGapMultiplier)] + barHeight * settings.frameDataOffsetMultiplier;
+      let newVal = frameData[k + (barHeight * settings.frameDataGapMultiplier)]
+      newVal = newVal + barHeight * settings.frameDataOffsetMultiplier;
+
       if (newVal > settings.frameDataHighCutoff || newVal < settings.frameDataLowCutoff) {
         newVal = settings.frameDataEmptyVal;
       }
+
       frameData[k] = newVal;
     }
 
     canvasContext.putImageData(frame, x + (barHeight * settings.adjustedGapMultiplier), 0);
     canvasContext.putImageData(frame, x, canvas.height - (settings.vizBarHeightMultiplier * barHeight));
-    //draw rectangles
-    //canvasContext.fillRect(x, canvas.height - 2 * barHeight, barWidth - barWidth/3, barHeight);
+
     x += barWidth;
   }
 
@@ -128,7 +117,7 @@ function animate() {
   }, 1000 / fps);
 }
 
-/*Inputs (sliders/upload) */
+/*Inputs*/
 function input(val, name) {
   settings[name] = val;
   populateStorage();
@@ -162,7 +151,7 @@ function updateAudioDisplay(files) {
   populateStorage();
 }
 
-/* Storage Initialization*/
+/* Local storage for presets*/
 if (!localStorage.getItem("current")) {
   populateStorage();
 } else {
@@ -215,6 +204,7 @@ function setToFavorite(presetName) {
 function loadSelections() {
   let presetSelect = document.getElementById("presetSelect");
   for (let index = 0; index < localStorage.length; index++) {
+
     //add the names of each stored settings to the options bar
     let presetName = localStorage.key(index);
     if (presetName != "current") {
