@@ -27,6 +27,7 @@
     <div class="spinner horizontal"></div>
     <div class="spinner diagonal part-2"></div>
   </label>
+
   <div id="sidebarMenu">
     <ul class="sidebarMenuInner">
     <p>Settings:</p>
@@ -94,6 +95,24 @@
       <input type="file" id="audioUpload" accept="audio/mp3" oninput="updateAudioDisplay(this.files)"/>
     </form>
 
+    <form>
+      <div>
+        <label for="presetName">Save as: </label>
+        <input type="text" id="presetName" name="presetName" placeholder = "Preset Name Here"/>
+      </div>
+      <div>
+        <button name="favoriteButton" type="button" onclick="addFavorite()">Add To Presets
+        </button>
+      </div>
+    </form>
+
+    <form>
+      <label for="presetSelect">Choose a preset:</label>
+      <select name="presetSelect" id="presetSelect" oninput = "setToFavorite(this.value)">
+      </select>
+    </form>
+
     </ul>
   </div>
+
 </html>
