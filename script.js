@@ -40,7 +40,6 @@ const barWidth = canvas.width / bufferLength;
 
 const fps = 120;
 
-
 let settings = {
   "frameDataIncrement": 2,
   "gapMultiplier": .09, //multiplied by barHeight
@@ -49,7 +48,6 @@ let settings = {
   "frameDataHighCutoff": 250,
   "frameDataLowCutoff": 50,
   "frameDataEmptyVal": 0,
-
   "adjustedGapMultiplier": .1,
   "vizBarHeightMultiplier": 2,
 
@@ -174,11 +172,11 @@ function addFavorite() {
   //if the preset already exists, overwrite it
   if (localStorage.getItem(presetName) != null) {
     localStorage.removeItem(presetName);
-    message = message + "' updated"
+    message = message + "' updated";
   } else {
     let presetSelect = document.getElementById("presetSelect");
     presetSelect.options[presetSelect.options.length] = new Option(presetName,presetName);
-    message = message + "' saved"
+    message = message + "' saved";
   }
   localStorage.setItem(presetName, JSON.stringify(settings));
   inputText.value = "";
