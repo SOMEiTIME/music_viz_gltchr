@@ -8,9 +8,8 @@
   <body>
     <div id="container">
       <canvas id="canvas"></canvas>
-      <audio id="audio"></audio>
+      <audio id="audio" loop></audio>
       <video id="video"
-        autoplay
         muted
         loop
         hidden
@@ -97,7 +96,7 @@
     <form>
       <div>
         <label for="presetName">Save as: </label>
-        <input type="text" id="presetName" name="presetName" placeholder = "Preset Name Here" pattern = "^\w*$"/>
+        <input type="text" id="presetName" name="presetName" placeholder = "Preset Name Here" pattern = "^\s*\w*$"/>
       </div>
       <div>
         <div class='favoriteButtons'>
@@ -114,8 +113,8 @@
     </form>
 
     <div class='favoriteButtons'>
-      <input type="button" class = "controlButton" id = "audioControlButton" value = "AUDIO  | |" onclick="control(this, audio)"></input>
-      <input type="button" class = "controlButton" id = "videoControlButton" value = "VIDEO  | |" onclick="control(this, video)"></input>
+      <input type="button" class = "controlButton" id = "audioControlButton" value = "AUDIO  | |" onclick="control(this)"></input>
+      <input type="button" class = "controlButton" id = "videoControlButton" value = "VIDEO  | |" onclick="control(this)"></input>
     </div>
 
     </ul>
