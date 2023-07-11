@@ -21,6 +21,8 @@ const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let audioSource = null;
 let analyser = null;
 
+let audioPlaying = true;
+let videoPlaying = true;
 audio1.play();
 video1.play();
 
@@ -127,7 +129,11 @@ function updateVideoDisplay(files) {
   video1.src = objectURL;
   settings.videoSrc = objectURL;
   video1.load();
-  video1.play();
+  if (videoPlaying) {
+    video1.play();
+  } else {
+    video1.stop();
+  }
   URL.revokeObjectURL(oldSrc);
   populateStorage();
 }
@@ -145,7 +151,11 @@ function updateAudioDisplay(files) {
   settings.audioSrc = objectURL;
 
   audio1.load();
-  audio1.play();
+  if (audioPlaying) {
+    audio1.play();
+  } else {
+    audio1.stop();
+  }
   populateStorage();
 }
 
@@ -167,6 +177,12 @@ function updateSettings() {
 
 function addFavorite() {
   let inputText = document.getElementById("presetName")
+  if (!/^\s*\w*$/.test(inputText.value)) {
+    inputText.value = "";
+    inputText.placeholder = "Letters and # Only";
+    return null;
+  }
+
   let presetName = inputText.value;
   let message = "Preset: '" + presetName;
   //if the preset already exists, overwrite it
@@ -179,6 +195,34 @@ function addFavorite() {
     message = message + "' saved";
   }
   localStorage.setItem(presetName, JSON.stringify(settings));
+  inputText.value = "";
+  inputText.placeholder = message;
+}
+
+function deleteFavorite() {
+  let inputText = document.getElementById("presetName")
+  if (!/^\s*\w*$/.test(inputText.value)) {
+    inputText.value = "";
+    inputText.placeholder = "Letters and # Only";
+    return null;
+  }
+
+  let presetName = inputText.value;
+  let message = "Preset: '" + presetName;
+  if (localStorage.getItem(presetName) != null) {
+    localStorage.removeItem(presetName);
+
+    let presetSelect = document.getElementById("presetSelect");
+    for (var i=0; i < presetSelect.length; i++) {
+      if (presetSelect.options[i].value == presetName) {
+        presetSelect.remove(i);
+      }
+    }
+
+    message = message + "' deleted";
+  } else {
+    message = message + "' never existed";
+  }
   inputText.value = "";
   inputText.placeholder = message;
 }
@@ -211,6 +255,32 @@ function loadSelections() {
   }
 }
 
+let onState = "| >"
+//play/pause buttons
+function control(button) {
+  let buttonName = button.value;
+  if (buttonName.includes("| |")) {
+    buttonName = buttonName.replace("| |", onState);
+    if (buttonName.includes("AUDIO")) {
+      audio1.pause();
+      audioPlaying = false;
+    } else {
+      video1.pause();
+      videoPlaying = false;
+    }
+  } else if (buttonName.includes(onState)) {
+    buttonName = buttonName.replace(onState, "| |");
+    if (buttonName.includes("AUDIO")) {
+      audio1.play();
+      audioPlaying = true;
+    } else {
+      video1.play();
+      videoPlaying = true;
+    }
+  }
+  button.value = buttonName;
+
+}
 
 window.onload = (event) => {
   animate();

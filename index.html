@@ -8,11 +8,9 @@
   <body>
     <div id="container">
       <canvas id="canvas"></canvas>
-      <audio id="audio"></audio>
+      <audio id="audio" loop></audio>
       <video id="video"
-        autoplay
         muted
-        preload
         loop
         hidden
       >
@@ -30,7 +28,7 @@
 
   <div id="sidebarMenu">
     <ul class="sidebarMenuInner">
-    <p>Settings:</p>
+    <p></p>
     <div>
       <input type="range" id="frameDataIncrement" name="frameDataIncrement"
              min="2" max="10" value = "4" step="1" oninput="input(this.valueAsNumber, this.id)">
@@ -98,11 +96,13 @@
     <form>
       <div>
         <label for="presetName">Save as: </label>
-        <input type="text" id="presetName" name="presetName" placeholder = "Preset Name Here"/>
+        <input type="text" id="presetName" name="presetName" placeholder = "Preset Name Here" pattern = "^\s*\w*$"/>
       </div>
       <div>
-        <button name="favoriteButton" type="button" onclick="addFavorite()">Add To Presets
-        </button>
+        <div class='favoriteButtons'>
+          <button name="favoriteButton" type="button" onclick="addFavorite()">Add To Presets</button>
+          <button name="deleteButton" type="button" onclick="deleteFavorite()">Delete Preset</button>
+        </div>
       </div>
     </form>
 
@@ -111,6 +111,11 @@
       <select name="presetSelect" id="presetSelect" oninput = "setToFavorite(this.value)">
       </select>
     </form>
+
+    <div class='favoriteButtons'>
+      <input type="button" class = "controlButton" id = "audioControlButton" value = "AUDIO  | |" onclick="control(this)"></input>
+      <input type="button" class = "controlButton" id = "videoControlButton" value = "VIDEO  | |" onclick="control(this)"></input>
+    </div>
 
     </ul>
   </div>
