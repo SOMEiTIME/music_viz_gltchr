@@ -30,7 +30,7 @@
 
   <div id="sidebarMenu">
     <ul class="sidebarMenuInner">
-    <p>Settings:</p>
+    <p></p>
     <div>
       <input type="range" id="frameDataIncrement" name="frameDataIncrement"
              min="2" max="10" value = "4" step="1" oninput="input(this.valueAsNumber, this.id)">
@@ -101,8 +101,10 @@
         <input type="text" id="presetName" name="presetName" placeholder = "Preset Name Here" pattern = "^\w*$"/>
       </div>
       <div>
-        <button name="favoriteButton" type="button" onclick="addFavorite()">Add To Presets
-        </button>
+        <div class='favoriteButtons'>
+          <button name="favoriteButton" type="button" onclick="addFavorite()">Add To Presets</button>
+          <button name="deleteButton" type="button" onclick="deleteFavorite()">Delete Preset</button>
+        </div>
       </div>
     </form>
 

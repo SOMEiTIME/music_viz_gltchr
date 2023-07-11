@@ -167,11 +167,12 @@ function updateSettings() {
 
 function addFavorite() {
   let inputText = document.getElementById("presetName")
-  if (!/^\w*$/.test(inputText)) {
+  if (!/^\w*$/.test(inputText.value)) {
     inputText.value = "";
     inputText.placeholder = "Letters and # Only";
     return null;
   }
+
   let presetName = inputText.value;
   let message = "Preset: '" + presetName;
   //if the preset already exists, overwrite it
@@ -184,6 +185,34 @@ function addFavorite() {
     message = message + "' saved";
   }
   localStorage.setItem(presetName, JSON.stringify(settings));
+  inputText.value = "";
+  inputText.placeholder = message;
+}
+
+function deleteFavorite() {
+  let inputText = document.getElementById("presetName")
+  if (!/^\w*$/.test(inputText.value)) {
+    inputText.value = "";
+    inputText.placeholder = "Letters and # Only";
+    return null;
+  }
+
+  let presetName = inputText.value;
+  let message = "Preset: '" + presetName;
+  if (localStorage.getItem(presetName) != null) {
+    localStorage.removeItem(presetName);
+
+    let presetSelect = document.getElementById("presetSelect");
+    for (var i=0; i < presetSelect.length; i++) {
+      if (presetSelect.options[i].value == presetName) {
+        presetSelect.remove(i);
+      }
+    }
+
+    message = message + "' deleted";
+  } else {
+    message = message + "' never existed";
+  }
   inputText.value = "";
   inputText.placeholder = message;
 }

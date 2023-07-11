@@ -214,8 +214,13 @@ input[type=checkbox]:checked ~ .sidebarIconToggle > .diagonal.part-2 {
 
 button {
   margin-top: 20px;
+  margin-right: 15px;
 }
 
 #presetSelect {
   margin-top: 5px;
+}
+
+#favoriteButtons {
+  display: float;
 }
