@@ -245,6 +245,28 @@ function loadSelections() {
   }
 }
 
+let onState = "| >"
+//play/pause buttons
+function control(button, media) {
+  let buttonName = button.value;
+  if (buttonName.includes("| |")) {
+    buttonName = buttonName.replace("| |", onState);
+    if (buttonName.includes("AUDIO")) {
+      audio1.pause();
+    } else {
+      media.pause();
+    }
+  } else if (buttonName.includes(onState)) {
+    buttonName = buttonName.replace(onState, "| |");
+    if (buttonName.includes("AUDIO")) {
+      audio1.play();
+    } else {
+      media.play();
+    }
+  }
+  button.value = buttonName;
+
+}
 
 window.onload = (event) => {
   animate();

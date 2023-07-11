@@ -12,7 +12,6 @@
       <video id="video"
         autoplay
         muted
-        preload
         loop
         hidden
       >
@@ -113,6 +112,11 @@
       <select name="presetSelect" id="presetSelect" oninput = "setToFavorite(this.value)">
       </select>
     </form>
+
+    <div class='favoriteButtons'>
+      <input type="button" class = "controlButton" id = "audioControlButton" value = "AUDIO  | |" onclick="control(this, audio)"></input>
+      <input type="button" class = "controlButton" id = "videoControlButton" value = "VIDEO  | |" onclick="control(this, video)"></input>
+    </div>
 
     </ul>
   </div>
