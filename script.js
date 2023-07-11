@@ -167,6 +167,11 @@ function updateSettings() {
 
 function addFavorite() {
   let inputText = document.getElementById("presetName")
+  if (!/^\w*$/.test(inputText)) {
+    inputText.value = "";
+    inputText.placeholder = "Letters and # Only";
+    return null;
+  }
   let presetName = inputText.value;
   let message = "Preset: '" + presetName;
   //if the preset already exists, overwrite it

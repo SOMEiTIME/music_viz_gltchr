@@ -138,6 +138,12 @@ input[type=text] {
   margin-top: 10px;
 }
 
+input[type=text]:invalid {
+  color: red;
+  opacity: 60%;
+  font-style: italic;
+}
+
 input:hover {
   opacity: 80%;
 }
