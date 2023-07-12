@@ -58,6 +58,8 @@ let settings = {
   */
   "videoSrc": video1.src,
   "audioSrc": audio1.src,
+  "videoName": video1.name,
+  "audioName": audio1.name,
 }
 
 function copySettings(newSettings) {
@@ -123,39 +125,49 @@ function input(val, name) {
   populateStorage();
 }
 
-function updateVideoDisplay(files) {
-  var oldSrc = settings.videoSrc;
-  var objectURL = URL.createObjectURL(files[0]);
-  video1.src = objectURL;
-  settings.videoSrc = objectURL;
-  video1.load();
-  if (videoPlaying) {
-    video1.play();
-  } else {
-    video1.stop();
+function sync(type) {
+  if (type == "audio") {
+    audio1.load();
+    if (audioPlaying) {
+      audio1.play();
+    } else {
+      audio1.pause();
+    }
+  } else if (type == "video") {
+    audio1.load();
+    if (videoPlaying) {
+      video1.play();
+    } else {
+      video1.pause();
+    }
   }
-  URL.revokeObjectURL(oldSrc);
-  populateStorage();
 }
 
-function updateAudioDisplay(files) {
-  var objectURL = settings.audioSrc;
-  var oldSrc = settings.audioSrc;
+function updateDisplay(files, type) {
+  let media = null;
+  if (type == "video") {
+    media = video1;
+  } else if (type == "audio") {
+    media = audio1;
+  } else {
+    return null;
+  }
+
+  let objectURL = settings[type + "Src"];
+  let oldSrc = settings[type + "Src"];
 
   if (files != null) {
     objectURL = URL.createObjectURL(files[0]);
     URL.revokeObjectURL(oldSrc);
   }
 
-  audio1.src = objectURL;
-  settings.audioSrc = objectURL;
-
-  audio1.load();
-  if (audioPlaying) {
-    audio1.play();
-  } else {
-    audio1.stop();
+  media.src = objectURL;
+  settings[type + "Src"] = objectURL;
+  if (files != null) {
+    settings[type + "Name"] = files[0].name;
   }
+
+  sync(type);
   populateStorage();
 }
 
@@ -175,9 +187,11 @@ function updateSettings() {
   copySettings(JSON.parse(localStorage.getItem("current")));
 }
 
+/* Favorites Controls */
+const favoriteRegex = /^[\s\w]*$/;
 function addFavorite() {
   let inputText = document.getElementById("presetName")
-  if (!/^\s*\w*$/.test(inputText.value)) {
+  if (!favoriteRegex.test(inputText.value)) {
     inputText.value = "";
     inputText.placeholder = "Letters and # Only";
     return null;
@@ -201,7 +215,7 @@ function addFavorite() {
 
 function deleteFavorite() {
   let inputText = document.getElementById("presetName")
-  if (!/^\s*\w*$/.test(inputText.value)) {
+  if (favoriteRegex.test(inputText.value)) {
     inputText.value = "";
     inputText.placeholder = "Letters and # Only";
     return null;
@@ -213,7 +227,7 @@ function deleteFavorite() {
     localStorage.removeItem(presetName);
 
     let presetSelect = document.getElementById("presetSelect");
-    for (var i=0; i < presetSelect.length; i++) {
+    for (let i = 0; i < presetSelect.length; i++) {
       if (presetSelect.options[i].value == presetName) {
         presetSelect.remove(i);
       }
@@ -229,6 +243,7 @@ function deleteFavorite() {
 
 function setToFavorite(presetName) {
   let newSettings = localStorage.getItem(presetName);
+  document.getElementById("presetName").value = presetName;
   if (newSettings != null) {
     copySettings(JSON.parse(newSettings));
     populateStorage();
@@ -245,14 +260,26 @@ function setToFavorite(presetName) {
 
 function loadSelections() {
   let presetSelect = document.getElementById("presetSelect");
-  for (let index = 0; index < localStorage.length; index++) {
 
+  let sortable = [];
+
+
+  for (let index = 0; index < localStorage.length; index++) {
     //add the names of each stored settings to the options bar
     let presetName = localStorage.key(index);
+    sortable.push(presetName);
+
+
+  }
+  sortable.sort();
+
+  for (let index = 0; index< sortable.length; index++) {
+    let presetName = sortable[index];
     if (presetName != "current") {
-      presetSelect.options[presetSelect.options.length] = new Option(localStorage.key(index), localStorage.key(index), index);
+      presetSelect.options[presetSelect.options.length] = new Option(presetName, presetName, index);
     }
   }
+
 }
 
 let onState = "| >"

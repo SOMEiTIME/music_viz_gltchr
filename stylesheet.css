@@ -114,7 +114,6 @@ input[type=range]::-webkit-slider-runnable-track  {
   font-size: 14px;
   color: var(--main-fg-color);
 }
-
 .sidebarMenuInner li a{
   color: white;
   text-transform: uppercase;
