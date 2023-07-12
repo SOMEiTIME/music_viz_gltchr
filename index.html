@@ -85,19 +85,20 @@
 
     <form>
       <label for="videoUpload">Video file</label>
-      <input type="file" id="videoUpload" accept="video/mp4" oninput="updateVideoDisplay(this.files)"/>
+      <input type="file" id="videoUpload" accept="video/mp4" oninput="updateDisplay(this.files, 'video')"/>
     </form>
 
     <form>
       <label for="audioUpload">Audio file</label>
-      <input type="file" id="audioUpload" accept="audio/mp3" oninput="updateAudioDisplay(this.files)"/>
+      <input type="file" id="audioUpload" accept="audio/mp3" oninput="updateDisplay(this.files, 'audio')"/>
     </form>
 
     <form>
       <div>
         <label for="presetName">Save as: </label>
-        <input type="text" id="presetName" name="presetName" placeholder = "Preset Name Here" pattern = "^\s*\w*$"/>
+        <input type="text" id="presetName" name="presetName" placeholder = "Preset Name Here" pattern = "^[\s\w]*$"/>
       </div>
+
       <div>
         <div class='favoriteButtons'>
           <button name="favoriteButton" type="button" onclick="addFavorite()">Add To Presets</button>
@@ -113,8 +114,18 @@
     </form>
 
     <div class='favoriteButtons'>
-      <input type="button" class = "controlButton" id = "audioControlButton" value = "AUDIO  | |" onclick="control(this)"></input>
-      <input type="button" class = "controlButton" id = "videoControlButton" value = "VIDEO  | |" onclick="control(this)"></input>
+      <input type="button" class = "controlButton" id = "audioControlButton" value = "AUDIO  | |" onclick="control(this)"
+      accesskey = "s"></input>
+      <input type="button" class = "controlButton" id = "videoControlButton" value = "VIDEO  | |" onclick="control(this)"
+      ></input>
+    </div>
+
+    <div>
+      <span id="presetInfoLabel"></span>
+      <div class='presetInfoRow'>
+        <span class='presetInfo' id="audioName"></span>
+        <span class='presetInfo' id="videoName"></span>
+      </div>
     </div>
 
     </ul>

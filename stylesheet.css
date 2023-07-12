@@ -114,7 +114,6 @@ input[type=range]::-webkit-slider-runnable-track  {
   font-size: 14px;
   color: var(--main-fg-color);
 }
-
 .sidebarMenuInner li a{
   color: white;
   text-transform: uppercase;
@@ -139,7 +138,7 @@ input[type=file] {
 }
 
 input[type=text] {
-  font-family: Arial;
+  font-family: "Times New Roman";
   margin-top: 10px;
 }
 
@@ -235,6 +234,30 @@ button:hover {
   display: inline-flex;
 }
 
+.presetInfoRow {
+  margin-top: 20px;
+}
+.presetInfo {
+  width: 50%;
+  float: left;
+  margin-bottom: 15px;
+  opacity: 50%;
+}
+.presetInfo:hover {
+  font-style: italic;
+  opacity: 80%;
+}
+
+#presetInfoLabel {
+  line-height: 10px;
+  font-size: 20px;
+  opacity: 50%;
+}
+#presetInfoLabel:hover {
+  font-style: italic;
+  opacity: 90%;
+}
+
 .controlButton {
   font-family: Times New Roman;
   font-size: 15px;
@@ -246,6 +269,7 @@ button:hover {
   padding: 15px 18px;
   margin-right: 40px;
   word-spacing: 2px;
+  margin-bottom: 25px;
 }
 
 .controlButton:hover {
