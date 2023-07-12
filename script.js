@@ -241,6 +241,26 @@ function deleteFavorite() {
   inputText.placeholder = message;
 }
 
+function updateFavoriteLabels() {
+  let audioInfo = "";
+  if (settings.audioName != undefined) {
+    audioInfo = settings.audioName;
+  }
+  document.getElementById("audioName").innerHTML = audioInfo;
+
+  let videoInfo = "";
+  if (settings.videoName != undefined) {
+    videoInfo = settings.videoName;
+  }
+  document.getElementById("videoName").innerHTML = videoInfo;
+
+  let presetInfoLabel = "";
+  if (videoInfo != "" || audioInfo != "") {
+    presetInfoLabel = "//preset saved with:";
+  }
+  document.getElementById("presetInfoLabel").innerHTML = presetInfoLabel;
+}
+
 function setToFavorite(presetName) {
   let newSettings = localStorage.getItem(presetName);
   document.getElementById("presetName").value = presetName;
@@ -256,24 +276,7 @@ function setToFavorite(presetName) {
       }
     });
 
-    let audioInfo = "";
-    if (settings.audioName != undefined) {
-      audioInfo = settings.audioName;
-    }
-    document.getElementById("audioName").innerHTML = audioInfo;
-
-    let videoInfo = "";
-    if (settings.videoName != undefined) {
-      videoInfo = settings.videoName;
-    }
-    document.getElementById("videoName").innerHTML = videoInfo;
-
-    let presetInfoLabel = "";
-    if (videoInfo != "" || audioInfo != "") {
-      presetInfoLabel = "//preset saved with:";
-    }
-    document.getElementById("presetInfoLabel").innerHTML = presetInfoLabel;
-
+    updateFavoriteLabels();
   }
 }
 
@@ -287,8 +290,6 @@ function loadSelections() {
     //add the names of each stored settings to the options bar
     let presetName = localStorage.key(index);
     sortable.push(presetName);
-
-
   }
   sortable.sort();
 
@@ -298,7 +299,6 @@ function loadSelections() {
       presetSelect.options[presetSelect.options.length] = new Option(presetName, presetName, index);
     }
   }
-
 }
 
 let onState = "| >"
@@ -325,7 +325,6 @@ function control(button) {
     }
   }
   button.value = buttonName;
-
 }
 
 window.onload = (event) => {
