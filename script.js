@@ -134,7 +134,7 @@ function sync(type) {
       audio1.pause();
     }
   } else if (type == "video") {
-    audio1.load();
+    video1.load();
     if (videoPlaying) {
       video1.play();
     } else {
@@ -215,7 +215,7 @@ function addFavorite() {
 
 function deleteFavorite() {
   let inputText = document.getElementById("presetName")
-  if (favoriteRegex.test(inputText.value)) {
+  if (!favoriteRegex.test(inputText.value)) {
     inputText.value = "";
     inputText.placeholder = "Letters and # Only";
     return null;
@@ -255,6 +255,25 @@ function setToFavorite(presetName) {
         input.value = settings[name];
       }
     });
+
+    let audioInfo = "";
+    if (settings.audioName != undefined) {
+      audioInfo = settings.audioName;
+    }
+    document.getElementById("audioName").innerHTML = audioInfo;
+
+    let videoInfo = "";
+    if (settings.videoName != undefined) {
+      videoInfo = settings.videoName;
+    }
+    document.getElementById("videoName").innerHTML = videoInfo;
+
+    let presetInfoLabel = "";
+    if (videoInfo != "" || audioInfo != "") {
+      presetInfoLabel = "//preset saved with:";
+    }
+    document.getElementById("presetInfoLabel").innerHTML = presetInfoLabel;
+
   }
 }
 

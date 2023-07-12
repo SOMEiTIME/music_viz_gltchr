@@ -98,6 +98,7 @@
         <label for="presetName">Save as: </label>
         <input type="text" id="presetName" name="presetName" placeholder = "Preset Name Here" pattern = "^[\s\w]*$"/>
       </div>
+
       <div>
         <div class='favoriteButtons'>
           <button name="favoriteButton" type="button" onclick="addFavorite()">Add To Presets</button>
@@ -117,6 +118,14 @@
       accesskey = "s"></input>
       <input type="button" class = "controlButton" id = "videoControlButton" value = "VIDEO  | |" onclick="control(this)"
       ></input>
+    </div>
+
+    <div>
+      <span id="presetInfoLabel"></span>
+      <div class='presetInfoRow'>
+        <span class='presetInfo' id="audioName"></span>
+        <span class='presetInfo' id="videoName"></span>
+      </div>
     </div>
 
     </ul>
