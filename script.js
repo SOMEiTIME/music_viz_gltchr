@@ -2,9 +2,9 @@ const videoInput = document.getElementById("videoUpload");
 const audioInput = document.querySelector("audioUpload");
 
 let audio1 = new Audio();
-audio1.src = "02 Cool Blue.mp3";
+audio1.src = "audio.mp3";
 const video1 = document.getElementById("video");
-video1.src = "plane.mp4";
+video1.src = "video.mp4";
 video1.type = "video/mp4";
 
 //initialize canvas, container
@@ -43,15 +43,15 @@ const barWidth = canvas.width / bufferLength;
 const fps = 120;
 
 let settings = {
-  "frameDataIncrement": 2,
-  "gapMultiplier": .09, //multiplied by barHeight
-  "frameDataGapMultiplier": 1, //multiplied by barHeight
-  "frameDataOffsetMultiplier": .5, //multiplied by barHeight
+  "frameDataIncrement": 10, //2
+  "gapMultiplier": 0, //.09, //multiplied by barHeight
+  "frameDataGapMultiplier": 0.5, //1, //multiplied by barHeight
+  "frameDataOffsetMultiplier": 0.1,//0.5, //multiplied by barHeight
   "frameDataHighCutoff": 250,
-  "frameDataLowCutoff": 50,
+  "frameDataLowCutoff": 0,//50,
   "frameDataEmptyVal": 0,
-  "adjustedGapMultiplier": .1,
-  "vizBarHeightMultiplier": 2,
+  "adjustedGapMultiplier": 0,//.1,
+  "vizBarHeightMultiplier": 0,//0.1,//2,
 
   /*while these can't be directly re-used from storage like the previous settings, it's
     handy to keep them around for revoking URLs
@@ -144,6 +144,9 @@ function sync(type) {
 }
 
 function updateDisplay(files, type) {
+  if (files == null || files.size == 0) {
+    return null;
+  }
   let media = null;
   if (type == "video") {
     media = video1;
