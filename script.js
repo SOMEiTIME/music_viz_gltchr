@@ -43,14 +43,14 @@ const barWidth = canvas.width / bufferLength;
 const fps = 120;
 
 let settings = {
-  "frameDataIncrement": 10, //2
-  "gapMultiplier": 0, //.09, //multiplied by barHeight
-  "frameDataGapMultiplier": 0.5, //1, //multiplied by barHeight
-  "frameDataOffsetMultiplier": 0.1,//0.5, //multiplied by barHeight
+  "frameDataIncrement": 7, //2
+  "gapMultiplier": 0.03, //.09, //multiplied by barHeight
+  "frameDataGapMultiplier": 5, //1, //multiplied by barHeight
+  "frameDataOffsetMultiplier": 0.3,//0.5, //multiplied by barHeight
   "frameDataHighCutoff": 250,
-  "frameDataLowCutoff": 0,//50,
+  "frameDataLowCutoff": 50,//50,
   "frameDataEmptyVal": 0,
-  "adjustedGapMultiplier": 0,//.1,
+  "adjustedGapMultiplier": 0.05,//.1,
   "vizBarHeightMultiplier": 0,//0.1,//2,
 
   /*while these can't be directly re-used from storage like the previous settings, it's
@@ -331,6 +331,7 @@ function control(button) {
 }
 
 window.onload = (event) => {
+  setToFavorite("current")
   animate();
   loadSelections();
 }
