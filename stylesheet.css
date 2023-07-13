@@ -133,12 +133,12 @@ input[type=checkbox] {
 }
 
 input[type=file] {
-  font-family: Times New Roman;
+  font-family: Arial;
   margin-top: 15px;
 }
 
 input[type=text] {
-  font-family: "Times New Roman";
+  font-family: "Arial";
   margin-top: 10px;
 }
 
@@ -151,6 +151,7 @@ input[type=text]:invalid {
 input:hover {
   opacity: 80%;
   font-style: italic;
+  font-family: Times New Roman;
 }
 
 .sidebarIconToggle {
@@ -256,6 +257,7 @@ button:hover {
 #presetInfoLabel:hover {
   font-style: italic;
   opacity: 90%;
+  font-family: Arial;
 }
 
 .controlButton {
