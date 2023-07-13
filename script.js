@@ -298,9 +298,7 @@ function loadSelections() {
 
   for (let index = 0; index< sortable.length; index++) {
     let presetName = sortable[index];
-    if (presetName != "current") {
-      presetSelect.options[presetSelect.options.length] = new Option(presetName, presetName, index);
-    }
+    presetSelect.options[presetSelect.options.length] = new Option(presetName, presetName, index);
   }
 }
 
