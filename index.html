@@ -83,6 +83,24 @@
       <label for="adjustedGapMultiplier">Bars</label>
     </div>
 
+    <div>
+      <input type="range" id="textHeightMultiplier" name="textHeightMultiplier"
+             min="0.5" max="4.5" step=".05" oninput="input(this.valueAsNumber, this.id)">
+      <label for="textHeightMultiplier">Text</label>
+    </div>
+
+    <div>
+      <input type="range" id="textGap" name="textGap"
+             min="0" max=".25" step=".001" oninput="input(this.valueAsNumber, this.id)">
+      <label for="textGap">Gap</label>
+    </div>
+
+    <div>
+      <input type="range" id="textLineCount" name="textLineCount"
+             min="1" max="8" step=".5" oninput="input(this.valueAsNumber, this.id)">
+      <label for="textLineCount">Lines</label>
+    </div>
+
     <form>
       <label for="videoUpload">Video file</label>
       <input type="file" id="videoUpload" accept="video/mp4" oninput="updateDisplay(this.files, 'video')"/>

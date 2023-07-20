@@ -33,7 +33,7 @@ audioSource.connect(analyser);
 analyser.connect(audioContext.destination);
 
 analyser.fftSize = 32;
-analyser.smoothingTimeConstant = .8;
+analyser.smoothingTimeConstant = .74;
 analyser.maxDecibels = -30;
 analyser.minDecibels = -100;
 const bufferLength = analyser.frequencyBinCount;
@@ -52,7 +52,9 @@ let settings = {
   "frameDataEmptyVal": 0,
   "adjustedGapMultiplier": 0.05,//.1,
   "vizBarHeightMultiplier": 0,//0.1,//2,
-
+  "textHeightMultiplier": 0,
+  "textGap": .1,
+  "textLineCount": 3,
   /*while these can't be directly re-used from storage like the previous settings, it's
     handy to keep them around for revoking URLs
   */
@@ -80,11 +82,31 @@ function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
 //animate
 let x = 0;
 
+let smallFont = "48px Times New Roman";
+let bigFont = "350px Times New Roman";
+offscreenContext.font = bigFont;
+offscreenContext.fillStyle = "white";
+offscreenContext.strokeStyle = "white";
 function animate() {
   x = 0;
   offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height);
+
+  /*text section*/
+  offscreenContext.font = bigFont;
+  offscreenContext.strokeStyle = "white";
+  let textDrawing = document.getElementById("presetName").value;
+  let textHeightMultiplierInverse = 4 - settings.textHeightMultiplier
+  offscreenContext.fillText(textDrawing, canvas.width * .05, canvas.height * .55 * textHeightMultiplierInverse);
+  //offscreenContext.strokeText(document.getElementById("presetName").value, canvas.width * .049, canvas.height * .54);
+  for (let i = 0; i < soundDataArray.length / settings.textLineCount; i++) {
+    barHeight = soundDataArray[i * settings.textLineCount];
+    let x = canvas.width * (.05 - (i * settings.textGap));
+    let y = (canvas.height * (.55 - (i * settings.textGap)) * textHeightMultiplierInverse);
+    offscreenContext.strokeText(textDrawing, x, y + barHeight * settings.adjustedGapMultiplier);
+  }
   analyser.getByteFrequencyData(soundDataArray);
 
+  offscreenContext.font = smallFont
   for (let i = 0; i < bufferLength; i++) {
     barHeight = soundDataArray[i];
     if (barHeight == 0) {
@@ -108,8 +130,8 @@ function animate() {
       frameData[k] = newVal;
     }
 
-    canvasContext.putImageData(frame, x + (barHeight * settings.adjustedGapMultiplier), 0);
-    canvasContext.putImageData(frame, x, canvas.height - (settings.vizBarHeightMultiplier * barHeight));
+    canvasContext.putImageData(frame, x + (barHeight * settings.adjustedGapMultiplier), 0); //video background
+    canvasContext.putImageData(frame, x, canvas.height - (settings.vizBarHeightMultiplier * barHeight)); // "bars"
 
     x += barWidth;
   }
