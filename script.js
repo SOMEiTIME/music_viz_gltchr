@@ -249,19 +249,19 @@ function updateFavoriteLabels() {
   if (settings.audioName != undefined) {
     audioInfo = settings.audioName;
   }
-  document.getElementById("audioName").innerHTML = audioInfo;
+  document.getElementById("audioName").textContent = audioInfo;
 
   let videoInfo = "";
   if (settings.videoName != undefined) {
     videoInfo = settings.videoName;
   }
-  document.getElementById("videoName").innerHTML = videoInfo;
+  document.getElementById("videoName").textContent = videoInfo;
 
   let presetInfoLabel = "";
   if (videoInfo != "" || audioInfo != "") {
     presetInfoLabel = "//preset saved with:";
   }
-  document.getElementById("presetInfoLabel").innerHTML = presetInfoLabel;
+  document.getElementById("presetInfoLabel").textContent = presetInfoLabel;
 }
 
 function setToFavorite(presetName) {
