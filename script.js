@@ -370,7 +370,23 @@ function control(button) {
   button.value = buttonName;
 }
 
+//wire up controls here rather than with inline handlers so a strict CSP can be used
+function bindControls() {
+  document.querySelectorAll('#sidebarMenu input[type="range"]').forEach(slider => {
+    slider.addEventListener("input", () => input(slider.valueAsNumber, slider.id));
+  });
+  document.getElementById("videoUpload").addEventListener("input", e => updateDisplay(e.target.files, "video"));
+  document.getElementById("audioUpload").addEventListener("input", e => updateDisplay(e.target.files, "audio"));
+  document.querySelector('button[name="favoriteButton"]').addEventListener("click", addFavorite);
+  document.querySelector('button[name="deleteButton"]').addEventListener("click", deleteFavorite);
+  document.getElementById("presetSelect").addEventListener("input", e => setToFavorite(e.target.value));
+  document.querySelectorAll(".controlButton").forEach(button => {
+    button.addEventListener("click", () => control(button));
+  });
+}
+
 window.onload = (event) => {
+  bindControls();
   setToFavorite("current")
   animate();
   loadSelections();
