@@ -144,7 +144,15 @@ function sync(type) {
 }
 
 function updateDisplay(files, type) {
-  if (files == null || files.size == 0) {
+  //FileList has length, not size; an empty list means the picker was cancelled
+  if (files == null || files.length == 0) {
+    return null;
+  }
+  //the accept attribute is only a hint, so check the type here too
+  if (type != "video" && type != "audio") {
+    return null;
+  }
+  if (!files[0].type.startsWith(type + "/")) {
     return null;
   }
   let media = null;
