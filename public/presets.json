@@ -54,7 +54,7 @@
     "adjustedGapMultiplier": 0.1,
     "vizBarHeightMultiplier": 0
   },
-  "testCBRE": {
+  "test4": {
     "frameDataIncrement": 8,
     "gapMultiplier": 0.51,
     "frameDataGapMultiplier": 4,
