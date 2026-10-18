@@ -523,9 +523,11 @@ function bindSidebarClose() {
     if (toggle.checked && outside) {
       toggle.checked = false;
     } else if (!toggle.checked && outside && touchscreen.matches && !e.target.closest("#startOverlay")) {
-      //the app has no canvas touch controls, so on touchscreens a tap anywhere opens the menu.
-      //the start overlay is skipped so that starting the show doesn't also pop the menu open
-      toggle.checked = true;
+      //the app has no canvas touch controls, so on touchscreens a tap in the middle of the screen
+      //opens the menu. the start overlay is skipped so that starting the show doesn't also open it
+      const inCenter = Math.abs(e.clientX / window.innerWidth - 0.5) < 0.25
+        && Math.abs(e.clientY / window.innerHeight - 0.5) < 0.25;
+      if (inCenter) toggle.checked = true;
     }
   });
 
