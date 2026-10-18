@@ -508,6 +508,59 @@ function bindControls() {
   });
 }
 
+//close the sidebar by tapping outside it or by swiping it left
+function bindSidebarClose() {
+  const toggle = document.getElementById("openSidebarMenu");
+  const menu = document.getElementById("sidebarMenu");
+  const icon = document.querySelector(".sidebarIconToggle");
+
+  //on narrow phones the sidebar fills the screen, so swiping is the way out there
+  document.addEventListener("click", e => {
+    if (toggle.checked && !menu.contains(e.target) && !icon.contains(e.target)) {
+      toggle.checked = false;
+    }
+  });
+
+  let startX = 0;
+  let startY = 0;
+  let dragX = 0;
+  let dragging = false;
+  let tracking = false;
+  menu.addEventListener("touchstart", e => {
+    //leave sliders and the like alone so adjusting them never closes the menu
+    tracking = e.touches.length == 1 && !e.target.closest('input, select, button');
+    dragging = false;
+    dragX = 0;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  menu.addEventListener("touchmove", e => {
+    if (!tracking) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (!dragging) {
+      //wait to see which way the gesture goes so vertical scrolling still works
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) tracking = false;
+      if (dx < -10 && Math.abs(dx) > Math.abs(dy)) dragging = true;
+      else return;
+    }
+    dragX = Math.min(0, dx);
+    menu.style.transition = "none";
+    menu.style.transform = `translateX(${dragX}px)`;
+  }, { passive: true });
+  const endDrag = () => {
+    if (!dragging) return;
+    dragging = false;
+    tracking = false;
+    //hand control back to the stylesheet, which animates to the open or closed position
+    menu.style.transition = "";
+    menu.style.transform = "";
+    if (dragX < -60) toggle.checked = false;
+  };
+  menu.addEventListener("touchend", endDrag);
+  menu.addEventListener("touchcancel", endDrag);
+}
+
 //the click is the user gesture browsers require before audio can run
 function startFromOverlay() {
   const overlay = document.getElementById("startOverlay");
@@ -523,6 +576,7 @@ function startFromOverlay() {
 
 window.onload = async () => {
   bindControls();
+  bindSidebarClose();
   document.getElementById("startOverlay").addEventListener("click", startFromOverlay, { once: true });
   //start from the saved version of the last preset, so the dropdown and sliders agree and
   //unsaved slider edits don't carry over a reload. "current" only holds the edits of a

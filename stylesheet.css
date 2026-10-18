@@ -49,6 +49,8 @@
     /* short screens (phones in landscape) can't fit every control */
     overflow-x: hidden;
     overflow-y: auto;
+    /* leave horizontal swipes to the close-by-swipe handler */
+    touch-action: pan-y;
   }
 
 #openSidebarMenu {
