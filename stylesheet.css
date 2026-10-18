@@ -28,7 +28,7 @@
 }
 
 #sidebarMenu {
-    height: 101%;
+    height: 101%; /* fallback for browsers without dvh */
     height: calc(100dvh + 10px);
     position: fixed;
     left: 0;

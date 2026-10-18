@@ -34,7 +34,7 @@ const bufferLength = analyser.frequencyBinCount;
 const soundDataArray = new Uint8Array(bufferLength);
 let barWidth = canvas.width / bufferLength;
 
-//phones and tablets rotate, and desktop windows resize, so keep the canvases matched to the window
+//keep the canvases matched to the window, including when a phone or tablet rotates
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -121,14 +121,15 @@ function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
   return val;
 }
 
-//the bundled video's text sits in this column, as fractions of its width. Uploaded
-//videos have no known focus, so they're cropped around their center
+//edges of the bundled video's text column, as fractions of its width (in pixels: 526 to
+//1302 of 1966). Uploads set videoFocus to null, which crops around the center
 const defaultVideoFocus = { left: 526 / 1966, right: 1302 / 1966 };
 let videoFocus = defaultVideoFocus;
+const focusMargin = 0.04;
 
-//crop the video to fill the canvas at its real shape, centered on the focus column. If the
-//screen is too narrow to fit the whole column (a portrait phone), show all of it and
-//letterbox rather than cut the text off
+//returns drawImage's source and destination rects: the video cropped to fill the canvas at
+//its real shape, centered on videoFocus. If the screen is too narrow for the whole focus
+//column (a portrait phone), it shows all of the column and letterboxes instead
 function videoDrawRect() {
   const vw = video1.videoWidth;
   const vh = video1.videoHeight;
@@ -147,8 +148,7 @@ function videoDrawRect() {
   let centerX = vw / 2;
   let dh = canvas.height;
   if (videoFocus) {
-    const margin = vw * 0.04;
-    const columnWidth = (videoFocus.right - videoFocus.left) * vw + margin * 2;
+    const columnWidth = (videoFocus.right - videoFocus.left + focusMargin * 2) * vw;
     centerX = (videoFocus.left + videoFocus.right) / 2 * vw;
     if (sw < columnWidth) {
       sw = Math.min(vw, columnWidth);
