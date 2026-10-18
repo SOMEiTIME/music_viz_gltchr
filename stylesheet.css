@@ -261,34 +261,19 @@ button:hover {
   margin: 0;
   z-index: 100;
   border: none;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.25);
   color: var(--main-fg-color);
   /* the video's text is the macOS system font (-apple-system); Windows and Android fall
      back to their own system fonts */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 48px;
+  font-weight: bold;
+  font-style: italic;
   cursor: pointer;
   transition: opacity 500ms ease-in-out;
 }
 #startOverlay:hover {
   opacity: 0.8;
-}
-/* one header and two smaller rows, like the text in the video */
-.startText {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 18px;
-}
-.startHeader {
-  font-size: 56px;
-  font-weight: bold;
-}
-.startRow {
-  font-size: 22px;
 }
 #startOverlay.hidden {
   opacity: 0;
