@@ -1,6 +1,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; media-src 'self' blob:; connect-src 'self' ws:; object-src 'none'; base-uri 'none'; form-action 'none'" />
     <link rel="stylesheet" href="stylesheet.css" />
     <title>Music Visualizer GLTCHR</title>
   </head>
@@ -31,66 +33,66 @@
     <p></p>
     <div>
       <input type="range" id="frameDataIncrement" name="frameDataIncrement"
-             min="2" max="10" step="1" oninput="input(this.valueAsNumber, this.id)">
+             min="2" max="10" step="1">
       <label for="frameDataIncrement">Color</label>
     </div>
 
     <div>
       <input type="range" id="gapMultiplier" name="gapMultiplier"
-             min="0" max="1" step=".01" oninput="input(this.valueAsNumber, this.id)">
+             min="0" max="1" step=".01">
       <label for="gapMultiplier">Gap</label>
     </div>
 
     <div>
       <input type="range" id="frameDataGapMultiplier" name="frameDataGapMultiplier"
-             min="0" max="5" step=".25" oninput="input(this.valueAsNumber, this.id)">
+             min="0" max="5" step=".25">
       <label for="frameDataGapMultiplier">Response</label>
     </div>
 
     <div>
       <input type="range" id="frameDataOffsetMultiplier" name="frameDataOffsetMultiplier"
-             min="0" max="2" step=".1" oninput="input(this.valueAsNumber, this.id)">
+             min="0" max="2" step=".1">
       <label for="frameDataOffsetMultiplier">Visual Offset</label>
     </div>
 
     <div>
       <input type="range" id="frameDataHighCutoff" name="frameDataHighCutoff"
-             min="0" max="255" step="1" oninput="input(this.valueAsNumber, this.id)">
+             min="0" max="255" step="1">
       <label for="frameDataHighCutoff">High End</label>
     </div>
 
     <div>
       <input type="range" id="frameDataLowCutoff" name="frameDataLowCutoff"
-             min="0" max="255" step="1" oninput="input(this.valueAsNumber, this.id)">
+             min="0" max="255" step="1">
       <label for="frameDataLowCutoff">Low End</label>
     </div>
 
     <div>
       <input type="range" id="frameDataEmptyVal" name="frameDataEmptyVal"
-             min="0" max="255" step="1" oninput="input(this.valueAsNumber, this.id)">
+             min="0" max="255" step="1">
       <label for="frameDataEmptyVal">Fill In</label>
     </div>
 
     <div>
       <input type="range" id="adjustedGapMultiplier" name="adjustedGapMultiplier"
-             min="0" max="1" step=".05" oninput="input(this.valueAsNumber, this.id)">
+             min="0" max="1" step=".05">
       <label for="adjustedGapMultiplier">Fidget</label>
     </div>
 
     <div>
       <input type="range" id="vizBarHeightMultiplier" name="vizBarHeightMultiplier"
-             min="0" max="6" step=".05" oninput="input(this.valueAsNumber, this.id)">
+             min="0" max="6" step=".05">
       <label for="adjustedGapMultiplier">Bars</label>
     </div>
 
     <form>
       <label for="videoUpload">Video file</label>
-      <input type="file" id="videoUpload" accept="video/mp4" oninput="updateDisplay(this.files, 'video')"/>
+      <input type="file" id="videoUpload" accept="video/mp4"/>
     </form>
 
     <form>
       <label for="audioUpload">Audio file</label>
-      <input type="file" id="audioUpload" accept="audio/mp3" oninput="updateDisplay(this.files, 'audio')"/>
+      <input type="file" id="audioUpload" accept="audio/mp3"/>
     </form>
 
     <form>
@@ -101,22 +103,22 @@
 
       <div>
         <div class='favoriteButtons'>
-          <button name="favoriteButton" type="button" onclick="addFavorite()">Save Preset</button>
-          <button name="deleteButton" type="button" onclick="deleteFavorite()">Delete Preset</button>
+          <button name="favoriteButton" type="button">Save Preset</button>
+          <button name="deleteButton" type="button">Delete Preset</button>
         </div>
       </div>
     </form>
 
     <form>
       <label for="presetSelect">Choose preset:</label>
-      <select name="presetSelect" id="presetSelect" oninput = "setToFavorite(this.value)">
+      <select name="presetSelect" id="presetSelect">
       </select>
     </form>
 
     <div class='favoriteButtons'>
-      <input type="button" class = "controlButton" id = "audioControlButton" value = "AUDIO  | |" onclick="control(this)"
+      <input type="button" class = "controlButton" id = "audioControlButton" value = "AUDIO  | |"
       accesskey = "s"></input>
-      <input type="button" class = "controlButton" id = "videoControlButton" value = "VIDEO  | |" onclick="control(this)"
+      <input type="button" class = "controlButton" id = "videoControlButton" value = "VIDEO  | |"
       ></input>
     </div>
 

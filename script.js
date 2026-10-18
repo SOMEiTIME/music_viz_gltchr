@@ -62,8 +62,48 @@ let settings = {
   "audioName": audio1.name,
 }
 
+//numeric settings and the slider ranges in index.html they must stay within
+const numericRanges = {
+  frameDataIncrement: [2, 10],
+  gapMultiplier: [0, 1],
+  frameDataGapMultiplier: [0, 5],
+  frameDataOffsetMultiplier: [0, 2],
+  frameDataHighCutoff: [0, 255],
+  frameDataLowCutoff: [0, 255],
+  frameDataEmptyVal: [0, 255],
+  adjustedGapMultiplier: [0, 1],
+  vizBarHeightMultiplier: [0, 6],
+};
+
 function copySettings(newSettings) {
-  Object.keys(settings).map(name => settings[name] = newSettings[name]);
+  if (newSettings == null || typeof newSettings !== "object") {
+    return;
+  }
+
+  Object.keys(settings).forEach(name => {
+    const value = newSettings[name];
+    const range = numericRanges[name];
+    if (range) {
+      //stored values are untrusted: a non-numeric or out of range increment can hang animate()
+      if (typeof value === "number" && Number.isFinite(value)) {
+        settings[name] = Math.min(range[1], Math.max(range[0], value));
+      }
+      return;
+    }
+    //media sources are never restored from storage (see comment on settings)
+    if (name === "videoSrc" || name === "audioSrc") {
+      return;
+    }
+    settings[name] = typeof value === "string" ? value : undefined;
+  });
+}
+
+function parseStoredSettings(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key));
+  } catch (e) {
+    return null;
+  }
 }
 
 function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
@@ -144,7 +184,15 @@ function sync(type) {
 }
 
 function updateDisplay(files, type) {
-  if (files == null || files.size == 0) {
+  //FileList has length, not size; an empty list means the picker was cancelled
+  if (files == null || files.length == 0) {
+    return null;
+  }
+  //the accept attribute is only a hint, so check the type here too
+  if (type != "video" && type != "audio") {
+    return null;
+  }
+  if (!files[0].type.startsWith(type + "/")) {
     return null;
   }
   let media = null;
@@ -187,7 +235,7 @@ function populateStorage() {
 }
 
 function updateSettings() {
-  copySettings(JSON.parse(localStorage.getItem("current")));
+  copySettings(parseStoredSettings("current"));
 }
 
 /* Favorites Controls */
@@ -249,26 +297,26 @@ function updateFavoriteLabels() {
   if (settings.audioName != undefined) {
     audioInfo = settings.audioName;
   }
-  document.getElementById("audioName").innerHTML = audioInfo;
+  document.getElementById("audioName").textContent = audioInfo;
 
   let videoInfo = "";
   if (settings.videoName != undefined) {
     videoInfo = settings.videoName;
   }
-  document.getElementById("videoName").innerHTML = videoInfo;
+  document.getElementById("videoName").textContent = videoInfo;
 
   let presetInfoLabel = "";
   if (videoInfo != "" || audioInfo != "") {
     presetInfoLabel = "//preset saved with:";
   }
-  document.getElementById("presetInfoLabel").innerHTML = presetInfoLabel;
+  document.getElementById("presetInfoLabel").textContent = presetInfoLabel;
 }
 
 function setToFavorite(presetName) {
   let newSettings = localStorage.getItem(presetName);
   document.getElementById("presetName").value = presetName;
   if (newSettings != null) {
-    copySettings(JSON.parse(newSettings));
+    copySettings(parseStoredSettings(presetName));
     populateStorage();
 
     //update all the sliders
@@ -330,7 +378,23 @@ function control(button) {
   button.value = buttonName;
 }
 
+//wire up controls here rather than with inline handlers so a strict CSP can be used
+function bindControls() {
+  document.querySelectorAll('#sidebarMenu input[type="range"]').forEach(slider => {
+    slider.addEventListener("input", () => input(slider.valueAsNumber, slider.id));
+  });
+  document.getElementById("videoUpload").addEventListener("input", e => updateDisplay(e.target.files, "video"));
+  document.getElementById("audioUpload").addEventListener("input", e => updateDisplay(e.target.files, "audio"));
+  document.querySelector('button[name="favoriteButton"]').addEventListener("click", addFavorite);
+  document.querySelector('button[name="deleteButton"]').addEventListener("click", deleteFavorite);
+  document.getElementById("presetSelect").addEventListener("input", e => setToFavorite(e.target.value));
+  document.querySelectorAll(".controlButton").forEach(button => {
+    button.addEventListener("click", () => control(button));
+  });
+}
+
 window.onload = (event) => {
+  bindControls();
   setToFavorite("current")
   animate();
   loadSelections();
