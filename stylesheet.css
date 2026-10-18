@@ -250,3 +250,32 @@ button:hover {
   text-size-adjust: 16px;
   font-style: italic;
 }
+
+/* click-to-start overlay: browsers need a user gesture before audio can play */
+#startOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  z-index: 100;
+  border: none;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--main-fg-color);
+  /* the video's text is the macOS system font (-apple-system); Windows and Android fall
+     back to their own system fonts */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 48px;
+  font-weight: bold;
+  font-style: italic;
+  cursor: pointer;
+  transition: opacity 500ms ease-in-out;
+}
+#startOverlay:hover {
+  opacity: 0.8;
+}
+#startOverlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
