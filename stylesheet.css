@@ -265,12 +265,28 @@ button:hover {
   color: var(--main-fg-color);
   /* matches the sans-serif text in the video behind it */
   font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: opacity 500ms ease-in-out;
 }
 #startOverlay:hover {
   opacity: 0.8;
+}
+/* one header and two smaller rows, like the text in the video */
+.startText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+.startHeader {
+  font-size: 56px;
+  font-weight: bold;
+}
+.startRow {
+  font-size: 22px;
 }
 #startOverlay.hidden {
   opacity: 0;
