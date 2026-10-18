@@ -1,5 +1,5 @@
 const videoInput = document.getElementById("videoUpload");
-const audioInput = document.querySelector("audioUpload");
+const audioInput = document.querySelector("#audioUpload");
 
 let audio1 = new Audio();
 audio1.src = "audio.mp3";
