@@ -1,3 +1,9 @@
+/* Safari tints its status bar and toolbar from the page background, which would be white
+   since #container is absolutely positioned and doesn't give the page one */
+html, body {
+  background: #000;
+}
+
 #container {
   position: absolute;
   top: 0;
