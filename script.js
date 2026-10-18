@@ -525,7 +525,7 @@ function bindSidebarClose() {
 
   //drags move the menu with the finger, then hand back to the stylesheet's transition.
   //"close" swipes the open menu left; "open" pulls the closed menu out from the left edge
-  const edgeSize = 24;
+  const edgeSize = 48;
   let mode = null; //"close", "open", or null while no gesture is being tracked
   let dragging = false;
   let startX = 0;
