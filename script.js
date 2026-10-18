@@ -513,13 +513,19 @@ function bindSidebarClose() {
   const toggle = document.getElementById("openSidebarMenu");
   const menu = document.getElementById("sidebarMenu");
   const icon = document.querySelector(".sidebarIconToggle");
+  const touchscreen = window.matchMedia("(pointer: coarse)");
 
   //on narrow phones the sidebar fills the screen, so swiping is the way out there
   document.addEventListener("click", e => {
     //tapping the icon label makes the browser re-fire the click on the checkbox itself, which
     //must not count as outside or the menu would close the moment it opened
-    if (toggle.checked && e.target != toggle && !menu.contains(e.target) && !icon.contains(e.target)) {
+    const outside = e.target != toggle && !menu.contains(e.target) && !icon.contains(e.target);
+    if (toggle.checked && outside) {
       toggle.checked = false;
+    } else if (!toggle.checked && outside && touchscreen.matches && !e.target.closest("#startOverlay")) {
+      //the app has no canvas touch controls, so on touchscreens a tap anywhere opens the menu.
+      //the start overlay is skipped so that starting the show doesn't also pop the menu open
+      toggle.checked = true;
     }
   });
 
