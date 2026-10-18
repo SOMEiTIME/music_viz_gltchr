@@ -263,8 +263,9 @@ button:hover {
   border: none;
   background: rgba(0, 0, 0, 0.6);
   color: var(--main-fg-color);
-  /* matches the sans-serif text in the video behind it */
-  font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* the video's text is the macOS system font (-apple-system); Windows and Android fall
+     back to their own system fonts */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -278,7 +279,8 @@ button:hover {
 .startText {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
   gap: 18px;
 }
 .startHeader {
