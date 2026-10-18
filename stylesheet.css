@@ -263,14 +263,14 @@ button:hover {
   border: none;
   background: rgba(0, 0, 0, 0.6);
   color: var(--main-fg-color);
-  font-family: Times New Roman;
-  font-size: 32px;
-  letter-spacing: 4px;
+  /* matches the sans-serif text in the video behind it */
+  font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 22px;
   cursor: pointer;
   transition: opacity 500ms ease-in-out;
 }
 #startOverlay:hover {
-  font-style: italic;
+  opacity: 0.8;
 }
 #startOverlay.hidden {
   opacity: 0;
