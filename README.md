@@ -30,7 +30,7 @@ The picture is split into vertical strips, one per slice of the audio's frequenc
 
  * Gap: louder strips get narrower and shift down
 
- * Response: how far the sound pushes the color channels around. Crank it for wilder colors
+ * Response: how far the sound pushes the color channels around. Higher response means more wild colors
 
  * Visual Offset: brightens a strip as it gets louder
 
