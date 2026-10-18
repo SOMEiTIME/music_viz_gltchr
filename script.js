@@ -516,7 +516,9 @@ function bindSidebarClose() {
 
   //on narrow phones the sidebar fills the screen, so swiping is the way out there
   document.addEventListener("click", e => {
-    if (toggle.checked && !menu.contains(e.target) && !icon.contains(e.target)) {
+    //tapping the icon label makes the browser re-fire the click on the checkbox itself, which
+    //must not count as outside or the menu would close the moment it opened
+    if (toggle.checked && e.target != toggle && !menu.contains(e.target) && !icon.contains(e.target)) {
       toggle.checked = false;
     }
   });
