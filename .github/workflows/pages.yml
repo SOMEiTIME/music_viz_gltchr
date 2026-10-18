@@ -28,8 +28,6 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile
       - run: yarn build
-      #the default media is loaded from the project root, which vite doesn't copy
-      - run: cp audio.mp3 video.mp4 dist/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

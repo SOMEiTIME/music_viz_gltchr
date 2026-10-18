@@ -1,13 +1,8 @@
-const videoInput = document.getElementById("videoUpload");
-
-let audio1 = new Audio();
-audio1.src = "audio.mp3";
+const audio1 = new Audio("audio.mp3");
 const video1 = document.getElementById("video");
 video1.src = "video.mp4";
-video1.type = "video/mp4";
 
-//initialize canvas, container
-const container = document.getElementById("container");
+//initialize canvas
 const canvas = document.getElementById("canvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -16,25 +11,23 @@ const canvasContext = canvas.getContext("2d");
 const offscreenCanvas = new OffscreenCanvas(canvas.width, canvas.height);
 const offscreenContext = offscreenCanvas.getContext("2d");
 
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-let audioSource = null;
-let analyser = null;
-
-let audioPlaying = true;
-let videoPlaying = true;
+//what the play/pause buttons say, kept apart from the elements' paused state
+//since the browser can block autoplay
+const playing = { audio: true, video: true };
 audio1.play();
 video1.play();
 
 //create analyizer
-audioSource = audioContext.createMediaElementSource(audio1);
-analyser = new AnalyserNode(audioContext);
-audioSource.connect(analyser);
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+const analyser = new AnalyserNode(audioContext, {
+  fftSize: 32,
+  smoothingTimeConstant: .8,
+  maxDecibels: -30,
+  minDecibels: -100,
+});
+audioContext.createMediaElementSource(audio1).connect(analyser);
 analyser.connect(audioContext.destination);
 
-analyser.fftSize = 32;
-analyser.smoothingTimeConstant = .8;
-analyser.maxDecibels = -30;
-analyser.minDecibels = -100;
 const bufferLength = analyser.frequencyBinCount;
 const soundDataArray = new Uint8Array(bufferLength);
 const barWidth = canvas.width / bufferLength;
@@ -117,10 +110,8 @@ function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
 }
 
 //animate
-let x = 0;
-
 function animate() {
-  x = 0;
+  let x = 0;
   offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height);
   analyser.getByteFrequencyData(soundDataArray);
 
@@ -167,14 +158,14 @@ function input(val, name) {
 function sync(type) {
   if (type == "audio") {
     audio1.load();
-    if (audioPlaying) {
+    if (playing.audio) {
       audio1.play();
     } else {
       audio1.pause();
     }
   } else if (type == "video") {
     video1.load();
-    if (videoPlaying) {
+    if (playing.video) {
       video1.play();
     } else {
       video1.pause();
@@ -359,19 +350,19 @@ function control(button) {
     buttonName = buttonName.replace("| |", onState);
     if (buttonName.includes("AUDIO")) {
       audio1.pause();
-      audioPlaying = false;
+      playing.audio = false;
     } else {
       video1.pause();
-      videoPlaying = false;
+      playing.video = false;
     }
   } else if (buttonName.includes(onState)) {
     buttonName = buttonName.replace(onState, "| |");
     if (buttonName.includes("AUDIO")) {
       audio1.play();
-      audioPlaying = true;
+      playing.audio = true;
     } else {
       video1.play();
-      videoPlaying = true;
+      playing.video = true;
     }
   }
   button.value = buttonName;
