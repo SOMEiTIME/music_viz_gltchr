@@ -126,7 +126,7 @@ function animate() {
   analyser.getByteFrequencyData(soundDataArray);
 
   for (let i = 0; i < bufferLength; i++) {
-    barHeight = soundDataArray[i];
+    let barHeight = soundDataArray[i];
     if (barHeight == 0) {
       barHeight = 1;
     }
