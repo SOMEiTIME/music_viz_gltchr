@@ -13,7 +13,6 @@ No tests or linter configured. Verify changes in the browser.
 ## Layout
 - `index.html` — page, sidebar controls (range sliders, file inputs, preset UI). There are no inline handlers (the CSP meta tag blocks them); `bindControls()` in `script.js` attaches listeners by id/selector, so new controls need wiring there.
 - `script.js` — everything else: canvas and `OffscreenCanvas` setup, `AudioContext` + `AnalyserNode` (fftSize 32), the `animate()` render loop, the `settings` object, and localStorage preset functions.
-- `util.js` — `storageAvailable()` helper copied from MDN.
 - `stylesheet.css` — styling.
 
 ## Gotchas

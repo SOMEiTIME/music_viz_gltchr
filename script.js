@@ -50,8 +50,8 @@ let settings = {
   */
   "videoSrc": video1.src,
   "audioSrc": audio1.src,
-  "videoName": video1.name,
-  "audioName": audio1.name,
+  "videoName": "video.mp4",
+  "audioName": "audio.mp3",
 }
 
 //numeric settings and the slider ranges in index.html they must stay within
@@ -337,7 +337,7 @@ function loadSelections() {
   for (let index = 0; index< sortable.length; index++) {
     let presetName = sortable[index];
     if (presetName != "current") {
-      presetSelect.options[presetSelect.options.length] = new Option(presetName, presetName, index);
+      presetSelect.options[presetSelect.options.length] = new Option(presetName, presetName);
     }
   }
 }
