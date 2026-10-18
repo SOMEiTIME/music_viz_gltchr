@@ -2,6 +2,17 @@ const audio1 = new Audio("audio.mp3");
 const video1 = document.getElementById("video");
 video1.src = "video.mp4";
 
+//iOS zooms in on focused text fields and doesn't zoom back out. maximum-scale stops that, and
+//since iOS 10 Safari ignores it for pinch zoom, so users can still zoom. it's only added on
+//iOS because other browsers (Android Chrome) would block pinch zoom with it. iPads report a
+//Mac user agent, so they're caught by having touch points
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+  || (navigator.platform == "MacIntel" && navigator.maxTouchPoints > 1);
+if (isIOS) {
+  const viewport = document.querySelector('meta[name="viewport"]');
+  viewport.content += ", maximum-scale=1";
+}
+
 //initialize canvas
 const canvas = document.getElementById("canvas");
 canvas.width = window.innerWidth;
