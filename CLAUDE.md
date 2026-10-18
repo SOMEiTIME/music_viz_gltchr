@@ -17,7 +17,7 @@ No tests or linter configured. Verify changes in the browser.
 - `stylesheet.css` — styling.
 
 ## Gotchas
-- `audio.mp3` and `video.mp4` are loaded by default from the project root. They are **gitignored** (`*.mp3`, `*.mp4`), so a fresh clone won't have them and the page won't work until you add your own. Don't commit media.
+- `audio.mp3` and `video.mp4` are loaded by default from the project root. They're committed (self-made, rarely change); other `*.mp3`/`*.mp4` files are still gitignored. Avoid committing new media, since every version stays in git history forever.
 - Browsers block autoplay until the user interacts with the page, and `audio1.play()` is called on load, so check the console for autoplay errors when debugging "no sound".
 - Adding a new setting needs changes in two places: the `settings` object in `script.js`, and a slider in `index.html` with an id matching the key. `copySettings()` copies only keys already in `settings`, so a new key missing from an old saved preset becomes `undefined`. Presets and `current` are stored in localStorage as JSON of `settings`; `loadSelections()` treats every localStorage key except `current` as a preset name.
 - User-uploaded files are used via object URLs (`videoSrc`/`audioSrc` in `settings`), so they can't be restored from storage. Revoke old URLs when swapping.
