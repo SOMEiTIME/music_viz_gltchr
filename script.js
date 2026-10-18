@@ -14,8 +14,9 @@ const offscreenContext = offscreenCanvas.getContext("2d");
 //what the play/pause buttons say, kept apart from the elements' paused state
 //since the browser can block autoplay
 const playing = { audio: true, video: true };
-audio1.play();
-video1.play();
+//muted video is allowed to autoplay, so the first frame shows behind the start overlay.
+//audio waits for the overlay click (see startFromOverlay)
+video1.play().catch(() => {});
 
 //create analyizer
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -444,8 +445,22 @@ function bindControls() {
   });
 }
 
+//the click is the user gesture browsers require before audio can run
+function startFromOverlay() {
+  const overlay = document.getElementById("startOverlay");
+  audioContext.resume();
+  if (playing.audio) {
+    audio1.play();
+  }
+  if (playing.video) {
+    video1.play();
+  }
+  overlay.classList.add("hidden");
+}
+
 window.onload = async () => {
   bindControls();
+  document.getElementById("startOverlay").addEventListener("click", startFromOverlay, { once: true });
   //start from the saved version of the last preset, so the dropdown and sliders agree and
   //unsaved slider edits don't carry over a reload. "current" only holds the edits of a
   //session that never picked a preset

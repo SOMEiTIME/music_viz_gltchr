@@ -250,3 +250,29 @@ button:hover {
   text-size-adjust: 16px;
   font-style: italic;
 }
+
+/* click-to-start overlay: browsers need a user gesture before audio can play */
+#startOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  z-index: 100;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--main-fg-color);
+  font-family: Times New Roman;
+  font-size: 32px;
+  letter-spacing: 4px;
+  cursor: pointer;
+  transition: opacity 500ms ease-in-out;
+}
+#startOverlay:hover {
+  font-style: italic;
+}
+#startOverlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
