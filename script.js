@@ -230,11 +230,29 @@ function updateSettings() {
 
 /* Favorites Controls */
 const favoriteRegex = /^[\s\w]*$/;
+
+//localStorage keys that hold app state rather than presets
+const lastPresetKey = "lastPreset";
+const seededKey = "seededPresets";
+const reservedKeys = ["current", lastPresetKey, seededKey];
+
+function validPresetName(name) {
+  return name != "" && favoriteRegex.test(name) && !reservedKeys.includes(name);
+}
+
+function selectPreset(presetName) {
+  let presetSelect = document.getElementById("presetSelect");
+  presetSelect.value = presetName;
+  if (presetSelect.value == presetName) {
+    localStorage.setItem(lastPresetKey, presetName);
+  }
+}
+
 function addFavorite() {
   let inputText = document.getElementById("presetName")
-  if (!favoriteRegex.test(inputText.value)) {
+  if (!validPresetName(inputText.value)) {
     inputText.value = "";
-    inputText.placeholder = "Letters and # Only";
+    inputText.placeholder = "Letters and numbers only";
     return null;
   }
 
@@ -250,15 +268,16 @@ function addFavorite() {
     message = message + "' saved";
   }
   localStorage.setItem(presetName, JSON.stringify(settings));
+  selectPreset(presetName);
   inputText.value = "";
   inputText.placeholder = message;
 }
 
 function deleteFavorite() {
   let inputText = document.getElementById("presetName")
-  if (!favoriteRegex.test(inputText.value)) {
+  if (!validPresetName(inputText.value)) {
     inputText.value = "";
-    inputText.placeholder = "Letters and # Only";
+    inputText.placeholder = "Letters and numbers only";
     return null;
   }
 
@@ -266,6 +285,9 @@ function deleteFavorite() {
   let message = "Preset: '" + presetName;
   if (localStorage.getItem(presetName) != null) {
     localStorage.removeItem(presetName);
+    if (localStorage.getItem(lastPresetKey) == presetName) {
+      localStorage.removeItem(lastPresetKey);
+    }
 
     let presetSelect = document.getElementById("presetSelect");
     for (let i = 0; i < presetSelect.length; i++) {
@@ -304,8 +326,13 @@ function updateFavoriteLabels() {
 
 function setToFavorite(presetName) {
   let newSettings = localStorage.getItem(presetName);
-  document.getElementById("presetName").value = presetName;
+  if (presetName != "current") {
+    document.getElementById("presetName").value = presetName;
+  }
   if (newSettings != null) {
+    if (presetName != "current") {
+      localStorage.setItem(lastPresetKey, presetName);
+    }
     copySettings(parseStoredSettings(presetName));
     populateStorage();
 
@@ -321,25 +348,54 @@ function setToFavorite(presetName) {
   }
 }
 
+//presets shipped in public/presets.json are copied into localStorage once each, so
+//presets the user has since edited or deleted aren't brought back
+async function seedStarterPresets() {
+  let starters = null;
+  try {
+    const response = await fetch("presets.json");
+    starters = await response.json();
+  } catch (e) {
+    return;
+  }
+  if (starters == null || typeof starters !== "object") {
+    return;
+  }
+
+  let seeded = parseStoredSettings(seededKey);
+  if (!Array.isArray(seeded)) {
+    seeded = [];
+  }
+  Object.keys(starters).forEach(name => {
+    if (!validPresetName(name) || seeded.includes(name) || localStorage.getItem(name) != null) {
+      return;
+    }
+    localStorage.setItem(name, JSON.stringify(starters[name]));
+    seeded.push(name);
+  });
+  localStorage.setItem(seededKey, JSON.stringify(seeded));
+}
+
 function loadSelections() {
   let presetSelect = document.getElementById("presetSelect");
+  presetSelect.options[0] = new Option("Choose preset", "");
 
   let sortable = [];
-
-
   for (let index = 0; index < localStorage.length; index++) {
     //add the names of each stored settings to the options bar
     let presetName = localStorage.key(index);
-    sortable.push(presetName);
+    if (!reservedKeys.includes(presetName)) {
+      sortable.push(presetName);
+    }
   }
   sortable.sort();
 
-  for (let index = 0; index< sortable.length; index++) {
-    let presetName = sortable[index];
-    if (presetName != "current") {
-      presetSelect.options[presetSelect.options.length] = new Option(presetName, presetName);
-    }
-  }
+  sortable.forEach(presetName => {
+    presetSelect.options[presetSelect.options.length] = new Option(presetName, presetName);
+  });
+
+  //value stays on the placeholder if the remembered preset no longer exists
+  presetSelect.value = localStorage.getItem(lastPresetKey) || "";
 }
 
 let onState = "| >"
@@ -377,15 +433,21 @@ function bindControls() {
   document.getElementById("audioUpload").addEventListener("input", e => updateDisplay(e.target.files, "audio"));
   document.querySelector('button[name="favoriteButton"]').addEventListener("click", addFavorite);
   document.querySelector('button[name="deleteButton"]').addEventListener("click", deleteFavorite);
-  document.getElementById("presetSelect").addEventListener("input", e => setToFavorite(e.target.value));
+  document.getElementById("presetSelect").addEventListener("input", e => {
+    //the placeholder option has an empty value
+    if (e.target.value != "") {
+      setToFavorite(e.target.value);
+    }
+  });
   document.querySelectorAll(".controlButton").forEach(button => {
     button.addEventListener("click", () => control(button));
   });
 }
 
-window.onload = (event) => {
+window.onload = async () => {
   bindControls();
   setToFavorite("current")
   animate();
+  await seedStarterPresets();
   loadSelections();
 }
