@@ -7,19 +7,23 @@ Browser-based audio/video visualizer. A video is drawn to a canvas and glitched 
 yarn            # install (yarn.lock is the lockfile; use yarn, not npm)
 yarn dev        # vite dev server
 yarn build      # production build to dist/
+yarn test       # vitest unit tests in tests/
 ```
-No tests or linter configured. Verify changes in the browser.
+No linter configured. Tests cover the DOM-free logic only, so still verify changes in the browser. CI runs `yarn test` on every PR.
 
 ## Layout
 - `index.html` — page, sidebar controls (range sliders, file inputs, preset UI). There are no inline handlers (the CSP meta tag blocks them); `bindControls()` in `script.js` attaches listeners by id/selector, so new controls need wiring there.
-- `script.js` — everything else: canvas and `OffscreenCanvas` setup, `AudioContext` + `AnalyserNode` (fftSize 32), the `animate()` render loop, the `settings` object, and localStorage preset functions.
+- `script.js` — everything else: canvas and `OffscreenCanvas` setup, `AudioContext` + `AnalyserNode` (fftSize 32), the `animate()` render loop, the `settings` object, and the preset UI.
+- `presets.js` — DOM-free settings and preset logic (`numericRanges`, `copySettings()`, preset name rules, `reservedKeys`, starter seeding). Functions take a Storage-like object rather than using `localStorage` directly, so tests can pass a fake (`tests/memoryStorage.js`).
+- `videoRect.js` — `videoDrawRect()`, the crop/letterbox maths.
+- `tests/` — Vitest tests. `data.test.js` checks that `index.html` slider ranges match `numericRanges` and that `public/presets.json` is valid, so it fails if those drift apart.
 - `stylesheet.css` — styling.
 
 ## Gotchas
 - `audio.mp3` and `video.mp4` are loaded by default from `public/` (Vite copies it into `dist/` as-is). They're committed (self-made, rarely change); other `*.mp3`/`*.mp4` files are still gitignored. Avoid committing new media, since every version stays in git history forever.
-- `defaultVideoFocus` in `script.js` is the bundled video's text column, which `videoDrawRect()` keeps in view. Replacing `public/video.mp4` means re-measuring it, or setting it to `null` for a center crop.
+- `defaultVideoFocus` in `script.js` is the bundled video's text column, which `videoDrawRect()` (in `videoRect.js`) keeps in view. Replacing `public/video.mp4` means re-measuring it, or setting it to `null` for a center crop.
 - Browsers block audio until the user interacts with the page, so audio starts from the click-to-start overlay (`startFromOverlay()`). Check the console for autoplay errors when debugging "no sound".
-- Adding a new setting needs changes in two places: the `settings` object in `script.js`, and a slider in `index.html` with an id matching the key. `copySettings()` copies only keys already in `settings`, so a new key missing from an old saved preset becomes `undefined`. Presets and `current` are stored in localStorage as JSON of `settings`; `loadSelections()` treats every localStorage key except those in `reservedKeys` (`current`, `lastPreset`, `seededPresets`) as a preset name, so any new app-state key must be added there. `public/presets.json` starter presets are seeded once per name by `seedStarterPresets()` and never overwrite an existing preset of the same name. To regenerate the file from a browser's presets, run this in the DevTools console and paste the result in (it drops the stale blob URLs; also remove `videoName`/`audioName`, which name files visitors don't have):
+- Adding a new setting needs changes in three places: the `settings` object in `script.js`, a slider in `index.html` with an id matching the key, and (if numeric) `numericRanges` in `presets.js` with the slider's min/max. `tests/data.test.js` also expects every starter preset in `public/presets.json` to have a value for it. `copySettings()` copies only keys already in `settings`, so a new key missing from an old saved preset becomes `undefined`. Presets and `current` are stored in localStorage as JSON of `settings`; `loadSelections()` treats every localStorage key except those in `reservedKeys` (`current`, `lastPreset`, `seededPresets`) as a preset name, so any new app-state key must be added there. `public/presets.json` starter presets are seeded once per name by `seedStarterPresets()` and never overwrite an existing preset of the same name. To regenerate the file from a browser's presets, run this in the DevTools console and paste the result in (it drops the stale blob URLs; also remove `videoName`/`audioName`, which name files visitors don't have):
   ```js
   copy(JSON.stringify(Object.fromEntries(Object.keys(localStorage)
     .filter(k => !["current", "lastPreset", "seededPresets"].includes(k))
@@ -38,5 +42,5 @@ No tests or linter configured. Verify changes in the browser.
 - Keep commits small and focused, with a short imperative message.
 - Pushing to a branch Claude created is fine without asking. Ask before force-pushing or pushing to any other branch (including `main`).
 - Open a PR without asking once the work on a branch Claude created is done (verified, docs updated). For any other branch, ask first. Don't merge PRs.
-- Before opening a PR, do a final pass over the whole diff against `main`: is it readable, well designed, and no more verbose than it needs to be? Fix what you find, without changing behaviour, then re-verify (`yarn build`, and check it in the browser) and note what the pass changed in the PR description.
+- Before opening a PR, do a final pass over the whole diff against `main`: is it readable, well designed, and no more verbose than it needs to be? Fix what you find, without changing behaviour, then re-verify (`yarn test`, `yarn build`, and check it in the browser) and note what the pass changed in the PR description.
 - Stage specific files (not `git add -A`), since stray files like `.DS_Store` are lying around.

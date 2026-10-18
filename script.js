@@ -1,3 +1,8 @@
+import {
+  copySettings, parseStoredSettings, lastPresetKey, validPresetName, presetNames, seedPresets,
+} from "./presets.js";
+import { videoDrawRect } from "./videoRect.js";
+
 const audio1 = new Audio("audio.mp3");
 const video1 = document.getElementById("video");
 video1.src = "video.mp4";
@@ -77,50 +82,6 @@ let settings = {
   "audioName": "audio.mp3",
 }
 
-//numeric settings and the slider ranges in index.html they must stay within
-const numericRanges = {
-  frameDataIncrement: [2, 10],
-  gapMultiplier: [0, 1],
-  frameDataGapMultiplier: [0, 5],
-  frameDataOffsetMultiplier: [0, 2],
-  frameDataHighCutoff: [0, 255],
-  frameDataLowCutoff: [0, 255],
-  frameDataEmptyVal: [0, 255],
-  adjustedGapMultiplier: [0, 1],
-  vizBarHeightMultiplier: [0, 6],
-};
-
-function copySettings(newSettings) {
-  if (newSettings == null || typeof newSettings !== "object") {
-    return;
-  }
-
-  Object.keys(settings).forEach(name => {
-    const value = newSettings[name];
-    const range = numericRanges[name];
-    if (range) {
-      //stored values are untrusted: a non-numeric or out of range increment can hang animate()
-      if (typeof value === "number" && Number.isFinite(value)) {
-        settings[name] = Math.min(range[1], Math.max(range[0], value));
-      }
-      return;
-    }
-    //media sources are never restored from storage (see comment on settings)
-    if (name === "videoSrc" || name === "audioSrc") {
-      return;
-    }
-    settings[name] = typeof value === "string" ? value : undefined;
-  });
-}
-
-function parseStoredSettings(key) {
-  try {
-    return JSON.parse(localStorage.getItem(key));
-  } catch (e) {
-    return null;
-  }
-}
-
 function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
   if (val > maxVal) {
     return maxVal;
@@ -136,42 +97,6 @@ function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
 //1302 of 1966). Uploads set videoFocus to null, which crops around the center
 const defaultVideoFocus = { left: 526 / 1966, right: 1302 / 1966 };
 let videoFocus = defaultVideoFocus;
-const focusMargin = 0.04;
-
-//returns drawImage's source and destination rects: the video cropped to fill the canvas at
-//its real shape, centered on videoFocus. If the screen is too narrow for the whole focus
-//column (a portrait phone), it shows all of the column and letterboxes instead
-function videoDrawRect() {
-  const vw = video1.videoWidth;
-  const vh = video1.videoHeight;
-  if (!vw || !vh) {
-    return null;
-  }
-
-  const canvasAspect = canvas.width / canvas.height;
-  let sw = vw;
-  let sh = vw / canvasAspect;
-  if (canvasAspect < vw / vh) {
-    sh = vh;
-    sw = vh * canvasAspect;
-  }
-
-  let centerX = vw / 2;
-  let dh = canvas.height;
-  if (videoFocus) {
-    const columnWidth = (videoFocus.right - videoFocus.left + focusMargin * 2) * vw;
-    centerX = (videoFocus.left + videoFocus.right) / 2 * vw;
-    if (sw < columnWidth) {
-      sw = Math.min(vw, columnWidth);
-      sh = vh;
-      dh = canvas.width * sh / sw;
-    }
-  }
-
-  const sx = Math.min(vw - sw, Math.max(0, centerX - sw / 2));
-  const sy = (vh - sh) / 2;
-  return [sx, sy, sw, sh, 0, (canvas.height - dh) / 2, canvas.width, dh];
-}
 
 //fill the letterbox bars by reflecting the video's top and bottom edges into them
 function paintMirroredBars(context, rect) {
@@ -193,7 +118,7 @@ function paintMirroredBars(context, rect) {
 //animate
 function animate() {
   let x = 0;
-  const rect = videoDrawRect();
+  const rect = videoDrawRect(video1.videoWidth, video1.videoHeight, canvas.width, canvas.height, videoFocus);
   if (rect) {
     //drawImage leaves the letterbox bars untouched, so start from black and mirror into them
     offscreenContext.fillStyle = "#000";
@@ -318,21 +243,10 @@ function populateStorage() {
 }
 
 function updateSettings() {
-  copySettings(parseStoredSettings("current"));
+  copySettings(settings, parseStoredSettings(localStorage, "current"));
 }
 
 /* Favorites Controls */
-const favoriteRegex = /^[\s\w]*$/;
-
-//localStorage keys that hold app state rather than presets
-const lastPresetKey = "lastPreset";
-const seededKey = "seededPresets";
-const reservedKeys = ["current", lastPresetKey, seededKey];
-
-function validPresetName(name) {
-  return name != "" && favoriteRegex.test(name) && !reservedKeys.includes(name);
-}
-
 function selectPreset(presetName) {
   let presetSelect = document.getElementById("presetSelect");
   presetSelect.value = presetName;
@@ -426,7 +340,7 @@ function setToFavorite(presetName) {
     if (presetName != "current") {
       localStorage.setItem(lastPresetKey, presetName);
     }
-    copySettings(parseStoredSettings(presetName));
+    copySettings(settings, parseStoredSettings(localStorage, presetName));
     populateStorage();
 
     //update all the sliders
@@ -441,49 +355,21 @@ function setToFavorite(presetName) {
   }
 }
 
-//presets shipped in public/presets.json are copied into localStorage once each, so
-//presets the user has since edited or deleted aren't brought back
+//adds the starter presets shipped in public/presets.json (see seedPresets)
 async function seedStarterPresets() {
-  let starters = null;
   try {
     const response = await fetch("presets.json");
-    starters = await response.json();
+    seedPresets(localStorage, await response.json());
   } catch (e) {
-    return;
+    //starter presets are optional
   }
-  if (starters == null || typeof starters !== "object") {
-    return;
-  }
-
-  let seeded = parseStoredSettings(seededKey);
-  if (!Array.isArray(seeded)) {
-    seeded = [];
-  }
-  Object.keys(starters).forEach(name => {
-    if (!validPresetName(name) || seeded.includes(name) || localStorage.getItem(name) != null) {
-      return;
-    }
-    localStorage.setItem(name, JSON.stringify(starters[name]));
-    seeded.push(name);
-  });
-  localStorage.setItem(seededKey, JSON.stringify(seeded));
 }
 
 function loadSelections() {
   let presetSelect = document.getElementById("presetSelect");
   presetSelect.options[0] = new Option("Choose preset", "");
 
-  let sortable = [];
-  for (let index = 0; index < localStorage.length; index++) {
-    //add the names of each stored settings to the options bar
-    let presetName = localStorage.key(index);
-    if (!reservedKeys.includes(presetName)) {
-      sortable.push(presetName);
-    }
-  }
-  sortable.sort();
-
-  sortable.forEach(presetName => {
+  presetNames(localStorage).forEach(presetName => {
     presetSelect.options[presetSelect.options.length] = new Option(presetName, presetName);
   });
 
