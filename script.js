@@ -121,10 +121,59 @@ function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
   return val;
 }
 
+//the bundled video's text sits in this column, as fractions of its width. Uploaded
+//videos have no known focus, so they're cropped around their center
+const defaultVideoFocus = { left: 526 / 1966, right: 1302 / 1966 };
+let videoFocus = defaultVideoFocus;
+
+//crop the video to fill the canvas at its real shape, centered on the focus column. If the
+//screen is too narrow to fit the whole column (a portrait phone), show all of it and
+//letterbox rather than cut the text off
+function videoDrawRect() {
+  const vw = video1.videoWidth;
+  const vh = video1.videoHeight;
+  if (!vw || !vh) {
+    return null;
+  }
+
+  const canvasAspect = canvas.width / canvas.height;
+  let sw = vw;
+  let sh = vw / canvasAspect;
+  if (canvasAspect < vw / vh) {
+    sh = vh;
+    sw = vh * canvasAspect;
+  }
+
+  let centerX = vw / 2;
+  let dh = canvas.height;
+  if (videoFocus) {
+    const margin = vw * 0.04;
+    const columnWidth = (videoFocus.right - videoFocus.left) * vw + margin * 2;
+    centerX = (videoFocus.left + videoFocus.right) / 2 * vw;
+    if (sw < columnWidth) {
+      sw = Math.min(vw, columnWidth);
+      sh = vh;
+      dh = canvas.width * sh / sw;
+    }
+  }
+
+  const sx = Math.min(vw - sw, Math.max(0, centerX - sw / 2));
+  const sy = (vh - sh) / 2;
+  return [sx, sy, sw, sh, 0, (canvas.height - dh) / 2, canvas.width, dh];
+}
+
 //animate
 function animate() {
   let x = 0;
-  offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height);
+  const rect = videoDrawRect();
+  if (rect) {
+    //paint the letterbox bars, which drawImage leaves untouched
+    offscreenContext.fillStyle = "#000";
+    offscreenContext.fillRect(0, 0, canvas.width, canvas.height);
+    offscreenContext.drawImage(video1, ...rect);
+  } else {
+    offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height);
+  }
   analyser.getByteFrequencyData(soundDataArray);
 
   for (let i = 0; i < bufferLength; i++) {
@@ -215,6 +264,9 @@ function updateDisplay(files, type) {
   }
 
   media.src = objectURL;
+  if (type == "video") {
+    videoFocus = null;
+  }
   settings[type + "Src"] = objectURL;
   if (files != null) {
     settings[type + "Name"] = files[0].name;
