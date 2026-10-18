@@ -11,7 +11,9 @@ yarn dev
 ```
 `yarn build` makes a production build in dist/.
 
-The page loads `audio.mp3` and `video.mp4` from `public/`, and they're included. Swap in your own with the same names, or upload them in the sidebar. Browsers block autoplay, so click the page if there's no sound.
+The page loads `audio.mp3` and `video.mp4` from `public/`, and they're included. Swap in your own with the same names, or upload them in the sidebar. Browsers block audio until you interact with the page, so it opens with a click-to-start screen.
+
+The included video is cropped to fill the screen around its text. If you replace `public/video.mp4`, update `defaultVideoFocus` in `script.js` to the left and right edges of the part you want kept in view, or set it to `null` to crop around the center.
 
 ## Sidebar
 Click the menu icon to open it.

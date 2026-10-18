@@ -9,7 +9,8 @@ canvas.height = window.innerHeight;
 const canvasContext = canvas.getContext("2d");
 
 const offscreenCanvas = new OffscreenCanvas(canvas.width, canvas.height);
-const offscreenContext = offscreenCanvas.getContext("2d");
+//animate() reads this canvas back every frame, so keep it in CPU memory
+const offscreenContext = offscreenCanvas.getContext("2d", { willReadFrequently: true });
 
 //what the play/pause buttons say, kept apart from the elements' paused state
 //since the browser can block autoplay
@@ -31,7 +32,17 @@ analyser.connect(audioContext.destination);
 
 const bufferLength = analyser.frequencyBinCount;
 const soundDataArray = new Uint8Array(bufferLength);
-const barWidth = canvas.width / bufferLength;
+let barWidth = canvas.width / bufferLength;
+
+//keep the canvases matched to the window, including when a phone or tablet rotates
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  offscreenCanvas.width = canvas.width;
+  offscreenCanvas.height = canvas.height;
+  barWidth = canvas.width / bufferLength;
+}
+window.addEventListener("resize", resizeCanvas);
 
 const fps = 120;
 
@@ -110,10 +121,59 @@ function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
   return val;
 }
 
+//edges of the bundled video's text column, as fractions of its width (in pixels: 526 to
+//1302 of 1966). Uploads set videoFocus to null, which crops around the center
+const defaultVideoFocus = { left: 526 / 1966, right: 1302 / 1966 };
+let videoFocus = defaultVideoFocus;
+const focusMargin = 0.04;
+
+//returns drawImage's source and destination rects: the video cropped to fill the canvas at
+//its real shape, centered on videoFocus. If the screen is too narrow for the whole focus
+//column (a portrait phone), it shows all of the column and letterboxes instead
+function videoDrawRect() {
+  const vw = video1.videoWidth;
+  const vh = video1.videoHeight;
+  if (!vw || !vh) {
+    return null;
+  }
+
+  const canvasAspect = canvas.width / canvas.height;
+  let sw = vw;
+  let sh = vw / canvasAspect;
+  if (canvasAspect < vw / vh) {
+    sh = vh;
+    sw = vh * canvasAspect;
+  }
+
+  let centerX = vw / 2;
+  let dh = canvas.height;
+  if (videoFocus) {
+    const columnWidth = (videoFocus.right - videoFocus.left + focusMargin * 2) * vw;
+    centerX = (videoFocus.left + videoFocus.right) / 2 * vw;
+    if (sw < columnWidth) {
+      sw = Math.min(vw, columnWidth);
+      sh = vh;
+      dh = canvas.width * sh / sw;
+    }
+  }
+
+  const sx = Math.min(vw - sw, Math.max(0, centerX - sw / 2));
+  const sy = (vh - sh) / 2;
+  return [sx, sy, sw, sh, 0, (canvas.height - dh) / 2, canvas.width, dh];
+}
+
 //animate
 function animate() {
   let x = 0;
-  offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height);
+  const rect = videoDrawRect();
+  if (rect) {
+    //paint the letterbox bars, which drawImage leaves untouched
+    offscreenContext.fillStyle = "#000";
+    offscreenContext.fillRect(0, 0, canvas.width, canvas.height);
+    offscreenContext.drawImage(video1, ...rect);
+  } else {
+    offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height);
+  }
   analyser.getByteFrequencyData(soundDataArray);
 
   for (let i = 0; i < bufferLength; i++) {
@@ -204,6 +264,9 @@ function updateDisplay(files, type) {
   }
 
   media.src = objectURL;
+  if (type == "video") {
+    videoFocus = null;
+  }
   settings[type + "Src"] = objectURL;
   if (files != null) {
     settings[type + "Name"] = files[0].name;

@@ -17,7 +17,8 @@ No tests or linter configured. Verify changes in the browser.
 
 ## Gotchas
 - `audio.mp3` and `video.mp4` are loaded by default from `public/` (Vite copies it into `dist/` as-is). They're committed (self-made, rarely change); other `*.mp3`/`*.mp4` files are still gitignored. Avoid committing new media, since every version stays in git history forever.
-- Browsers block autoplay until the user interacts with the page, and `audio1.play()` is called on load, so check the console for autoplay errors when debugging "no sound".
+- `defaultVideoFocus` in `script.js` is the bundled video's text column, which `videoDrawRect()` keeps in view. Replacing `public/video.mp4` means re-measuring it, or setting it to `null` for a center crop.
+- Browsers block audio until the user interacts with the page, so audio starts from the click-to-start overlay (`startFromOverlay()`). Check the console for autoplay errors when debugging "no sound".
 - Adding a new setting needs changes in two places: the `settings` object in `script.js`, and a slider in `index.html` with an id matching the key. `copySettings()` copies only keys already in `settings`, so a new key missing from an old saved preset becomes `undefined`. Presets and `current` are stored in localStorage as JSON of `settings`; `loadSelections()` treats every localStorage key except those in `reservedKeys` (`current`, `lastPreset`, `seededPresets`) as a preset name, so any new app-state key must be added there. `public/presets.json` starter presets are seeded once per name by `seedStarterPresets()` and never overwrite an existing preset of the same name. To regenerate the file from a browser's presets, run this in the DevTools console and paste the result in (it drops the stale blob URLs; also remove `videoName`/`audioName`, which name files visitors don't have):
   ```js
   copy(JSON.stringify(Object.fromEntries(Object.keys(localStorage)
