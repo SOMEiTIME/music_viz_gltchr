@@ -162,15 +162,33 @@ function videoDrawRect() {
   return [sx, sy, sw, sh, 0, (canvas.height - dh) / 2, canvas.width, dh];
 }
 
+//fill the letterbox bars by reflecting the video's top and bottom edges into them
+function paintMirroredBars(context, rect) {
+  const [sx, sy, sw, sh, , dy, , dh] = rect;
+  if (dy <= 0) return;
+  const band = Math.min(sh, dy * sh / dh);
+  context.save();
+  context.translate(0, dy);
+  context.scale(1, -1);
+  context.drawImage(video1, sx, sy, sw, band, 0, 0, canvas.width, dy);
+  context.restore();
+  context.save();
+  context.translate(0, canvas.height);
+  context.scale(1, -1);
+  context.drawImage(video1, sx, sy + sh - band, sw, band, 0, 0, canvas.width, dy);
+  context.restore();
+}
+
 //animate
 function animate() {
   let x = 0;
   const rect = videoDrawRect();
   if (rect) {
-    //paint the letterbox bars, which drawImage leaves untouched
+    //drawImage leaves the letterbox bars untouched, so start from black and mirror into them
     offscreenContext.fillStyle = "#000";
     offscreenContext.fillRect(0, 0, canvas.width, canvas.height);
     offscreenContext.drawImage(video1, ...rect);
+    paintMirroredBars(offscreenContext, rect);
   } else {
     offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height);
   }
