@@ -1,6 +1,6 @@
 # music_viz_gltchr
 A simple toy for the browser, using vanilla JS on Vite.
-Preview public demo [here](https://someitime.github.io/music_viz_gltchr/)
+Preview public demo [here](https://someitime.github.io/music_viz_gltchr/).
 
 Plays a video on a canvas and glitches it using the frequency data from the audio.
 
