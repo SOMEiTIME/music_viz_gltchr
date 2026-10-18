@@ -305,6 +305,12 @@ input[type="range"]::-moz-range-thumb {
     line-height: 28px;
   }
 
+  /* iOS Safari zooms the page into any field under 16px when it's focused */
+  input[type="text"],
+  select {
+    font-size: 16px;
+  }
+
   input[type="range"] {
     width: min(200px, 50vw);
     margin-top: 16px;
