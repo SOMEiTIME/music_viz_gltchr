@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 *.mp3
 *.mp4
+!audio.mp3
+!video.mp4
