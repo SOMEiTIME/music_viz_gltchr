@@ -1,6 +1,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta http-equiv="Content-Security-Policy"
       content="default-src 'self'; media-src 'self' blob:; connect-src 'self' ws:; object-src 'none'; base-uri 'none'; form-action 'none'" />
     <link rel="stylesheet" href="stylesheet.css" />
@@ -14,6 +15,7 @@
       <video id="video"
         muted
         loop
+        playsinline
         hidden
       >
       </video>
@@ -88,12 +90,12 @@
 
     <form>
       <label for="videoUpload">Video file</label>
-      <input type="file" id="videoUpload" accept="video/mp4"/>
+      <input type="file" id="videoUpload" accept="video/*"/>
     </form>
 
     <form>
       <label for="audioUpload">Audio file</label>
-      <input type="file" id="audioUpload" accept="audio/mp3"/>
+      <input type="file" id="audioUpload" accept="audio/*"/>
     </form>
 
     <form>

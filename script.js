@@ -9,7 +9,8 @@ canvas.height = window.innerHeight;
 const canvasContext = canvas.getContext("2d");
 
 const offscreenCanvas = new OffscreenCanvas(canvas.width, canvas.height);
-const offscreenContext = offscreenCanvas.getContext("2d");
+//animate() reads this canvas back every frame, so keep it in CPU memory
+const offscreenContext = offscreenCanvas.getContext("2d", { willReadFrequently: true });
 
 //what the play/pause buttons say, kept apart from the elements' paused state
 //since the browser can block autoplay
@@ -31,7 +32,17 @@ analyser.connect(audioContext.destination);
 
 const bufferLength = analyser.frequencyBinCount;
 const soundDataArray = new Uint8Array(bufferLength);
-const barWidth = canvas.width / bufferLength;
+let barWidth = canvas.width / bufferLength;
+
+//phones and tablets rotate, and desktop windows resize, so keep the canvases matched to the window
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  offscreenCanvas.width = canvas.width;
+  offscreenCanvas.height = canvas.height;
+  barWidth = canvas.width / bufferLength;
+}
+window.addEventListener("resize", resizeCanvas);
 
 const fps = 120;
 
