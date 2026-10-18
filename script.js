@@ -508,7 +508,7 @@ function bindControls() {
   });
 }
 
-//close the sidebar by tapping outside it or by swiping it left
+//close the sidebar by tapping outside it or by swiping it left, and open it by dragging from the left edge
 function bindSidebarClose() {
   const toggle = document.getElementById("openSidebarMenu");
   const menu = document.getElementById("sidebarMenu");
@@ -523,44 +523,64 @@ function bindSidebarClose() {
     }
   });
 
+  //drags move the menu with the finger, then hand back to the stylesheet's transition.
+  //"close" swipes the open menu left; "open" pulls the closed menu out from the left edge
+  const edgeSize = 24;
+  let mode = null; //"close", "open", or null while no gesture is being tracked
+  let dragging = false;
   let startX = 0;
   let startY = 0;
-  let dragX = 0;
-  let dragging = false;
-  let tracking = false;
-  menu.addEventListener("touchstart", e => {
-    //leave sliders and the like alone so adjusting them never closes the menu
-    tracking = e.touches.length == 1 && !e.target.closest('input, select, button');
+  let offset = 0; //how far the menu has been dragged from its resting position
+
+  document.addEventListener("touchstart", e => {
+    mode = null;
     dragging = false;
-    dragX = 0;
+    offset = 0;
+    if (e.touches.length != 1) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
+    if (toggle.checked) {
+      //leave sliders and the like alone so adjusting them never closes the menu
+      if (menu.contains(e.target) && !e.target.closest('input, select, button')) mode = "close";
+    } else if (startX < edgeSize) {
+      mode = "open";
+    }
   }, { passive: true });
-  menu.addEventListener("touchmove", e => {
-    if (!tracking) return;
+
+  document.addEventListener("touchmove", e => {
+    if (!mode) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
     if (!dragging) {
       //wait to see which way the gesture goes so vertical scrolling still works
-      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) tracking = false;
-      if (dx < -10 && Math.abs(dx) > Math.abs(dy)) dragging = true;
-      else return;
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
+        mode = null;
+        return;
+      }
+      const rightway = mode == "close" ? dx < -10 : dx > 10;
+      if (!rightway || Math.abs(dx) < Math.abs(dy)) return;
+      dragging = true;
+      menu.style.transition = "none";
     }
-    dragX = Math.min(0, dx);
-    menu.style.transition = "none";
-    menu.style.transform = `translateX(${dragX}px)`;
-  }, { passive: true });
+    //stop the browser from also treating the drag as a scroll or back gesture
+    e.preventDefault();
+    const width = menu.offsetWidth;
+    offset = mode == "close" ? Math.min(0, dx) : Math.min(width, Math.max(0, dx));
+    const position = mode == "close" ? offset : offset - width;
+    menu.style.transform = `translateX(${position}px)`;
+  }, { passive: false });
+
   const endDrag = () => {
     if (!dragging) return;
     dragging = false;
-    tracking = false;
-    //hand control back to the stylesheet, which animates to the open or closed position
     menu.style.transition = "";
     menu.style.transform = "";
-    if (dragX < -60) toggle.checked = false;
+    if (mode == "close" && offset < -60) toggle.checked = false;
+    if (mode == "open" && offset > 60) toggle.checked = true;
+    mode = null;
   };
-  menu.addEventListener("touchend", endDrag);
-  menu.addEventListener("touchcancel", endDrag);
+  document.addEventListener("touchend", endDrag);
+  document.addEventListener("touchcancel", endDrag);
 }
 
 //the click is the user gesture browsers require before audio can run
