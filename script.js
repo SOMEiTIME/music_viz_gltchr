@@ -591,6 +591,23 @@ function bindSidebarClose() {
   document.addEventListener("touchcancel", endDrag);
 }
 
+//on touchscreens, stop the media while the page is in the background and pick up again on return.
+//`playing` holds what the user asked for, so it is left alone and decides what resumes
+function bindBackgroundPause() {
+  const touchscreen = window.matchMedia("(pointer: coarse)");
+  document.addEventListener("visibilitychange", () => {
+    if (!touchscreen.matches) return;
+    if (document.hidden) {
+      audio1.pause();
+      video1.pause();
+    } else if (document.getElementById("startOverlay").classList.contains("hidden")) {
+      audioContext.resume();
+      if (playing.audio) audio1.play();
+      if (playing.video) video1.play();
+    }
+  });
+}
+
 //the click is the user gesture browsers require before audio can run
 function startFromOverlay() {
   const overlay = document.getElementById("startOverlay");
@@ -607,6 +624,7 @@ function startFromOverlay() {
 window.onload = async () => {
   bindControls();
   bindSidebarClose();
+  bindBackgroundPause();
   document.getElementById("startOverlay").addEventListener("click", startFromOverlay, { once: true });
   //start from the saved version of the last preset, so the dropdown and sliders agree and
   //unsaved slider edits don't carry over a reload. "current" only holds the edits of a
