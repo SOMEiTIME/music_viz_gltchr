@@ -9,7 +9,7 @@ Plays a video on a canvas and glitches it using the frequency data from the audi
 yarn
 yarn dev
 ```
-`yarn build` makes a production build in dist/.
+`yarn build` makes a production build in dist/. `yarn test` runs the tests.
 
 The page loads `audio.mp3` and `video.mp4` from `public/`, and they're included. Swap in your own with the same names, or upload them in the sidebar. Browsers block audio until you interact with the page, so it opens with a click-to-start screen.
 
