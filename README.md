@@ -1,5 +1,6 @@
 # music_viz_gltchr
 A simple toy for the browser, using vanilla JS on Vite.
+Preview public demo [here](https://someitime.github.io/music_viz_gltchr/).
 
 Plays a video on a canvas and glitches it using the frequency data from the audio.
 
@@ -10,7 +11,7 @@ yarn dev
 ```
 `yarn build` makes a production build in dist/.
 
-The page loads `audio.mp3` and `video.mp4` from the project root, and they're included. Swap in your own with the same names, or upload them in the sidebar. Browsers block autoplay, so click the page if there's no sound.
+The page loads `audio.mp3` and `video.mp4` from `public/`, and they're included. Swap in your own with the same names, or upload them in the sidebar. Browsers block autoplay, so click the page if there's no sound.
 
 ## Sidebar
 Click the menu icon to open it.
@@ -22,6 +23,8 @@ Click the menu icon to open it.
  * Presets save your slider settings under a name (letters, numbers, underscores and spaces only). They live in localStorage
 
  * Uploaded files aren't saved with presets
+
+ * A set of starter presets is included, and the dropdown reopens on the last preset you chose or saved
 
 ## Sliders
 The picture is split into vertical strips, one per slice of the audio's frequency range. The louder a slice is, the harder its strip gets glitched.
