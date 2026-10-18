@@ -446,7 +446,11 @@ function bindControls() {
 
 window.onload = async () => {
   bindControls();
-  setToFavorite("current")
+  //start from the saved version of the last preset, so the dropdown and sliders agree and
+  //unsaved slider edits don't carry over a reload. "current" only holds the edits of a
+  //session that never picked a preset
+  const lastPreset = localStorage.getItem(lastPresetKey);
+  setToFavorite(lastPreset != null && localStorage.getItem(lastPreset) != null ? lastPreset : "current");
   animate();
   await seedStarterPresets();
   loadSelections();
