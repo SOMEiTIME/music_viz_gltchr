@@ -533,8 +533,23 @@ function bindSidebarClose() {
   const icon = document.querySelector(".sidebarIconToggle");
   const touchscreen = window.matchMedia("(pointer: coarse)");
 
+  //the focused element when a tap begins, since by the time its click fires focus has moved
+  let focusedAtTap = null;
+  document.addEventListener("pointerdown", () => {
+    focusedAtTap = document.activeElement;
+  }, true);
+
   //on narrow phones the sidebar fills the screen, so swiping is the way out there
   document.addEventListener("click", e => {
+    //on touchscreens a tap on the menu's empty space closes it too. taps on controls or their
+    //labels don't count, nor does the tap that dismisses the keyboard from the preset name field
+    const onEmptyMenu = menu.contains(e.target) && !e.target.closest("input, select, button, label")
+      && !(focusedAtTap && focusedAtTap.matches("input[type=text]"));
+    if (toggle.checked && onEmptyMenu && touchscreen.matches) {
+      toggle.checked = false;
+      return;
+    }
+
     //tapping the icon label makes the browser re-fire the click on the checkbox itself, which
     //must not count as outside or the menu would close the moment it opened
     const outside = e.target != toggle && !menu.contains(e.target) && !icon.contains(e.target);
