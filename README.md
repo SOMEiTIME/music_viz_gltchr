@@ -5,6 +5,7 @@ Preview public demo [here](https://someitime.github.io/music_viz_gltchr/).
 Plays a video on a canvas and glitches it using the frequency data from the audio.
 
 ## Usage
+Needs Node 22.12 or newer.
 ```
 yarn
 yarn dev

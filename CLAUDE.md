@@ -3,6 +3,7 @@
 Browser-based audio/video visualizer. A video is drawn to a canvas and glitched using frequency data from an audio analyser (Web Audio API). Sliders in a sidebar tune the effect, and settings can be saved as named presets. Vanilla JS on a Vite scaffold.
 
 ## Run
+Needs Node 22.12 or newer (Vitest 5 requires it; set in `engines` in `package.json`).
 ```
 yarn            # install (yarn.lock is the lockfile; use yarn, not npm)
 yarn dev        # vite dev server
