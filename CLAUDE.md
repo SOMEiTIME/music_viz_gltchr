@@ -36,6 +36,9 @@ No linter configured. Tests cover the DOM-free logic only, so still verify chang
 - Preset names are validated by a `^[\s\w]*$` pattern; keep that in mind if names are changed or shown in the DOM.
 - The `settings` object carries trailing comments with older default values (e.g. `//2`, `//.09`). They are tuning history, so leave them in.
 
+## Public repo
+This repo is public. Don't commit personal details (full name, email, local paths, device names), other people's contact info, or secrets. Ask first if a task needs one.
+
 ## Git workflow
 - Never commit directly to `main`. Before making any commit, create a branch named for the work (e.g. `feature/add-glitch-mode`, `fix/header-parsing`, `docs/update-notes`) and commit there.
 - If you're on `main` when asked to commit, switch to a new branch first.
