@@ -20,6 +20,7 @@ The included video is cropped to fill the screen around its text. If you replace
 Click the menu icon to open it.
 
  * Sliders tune the effect (see below).
+ * Byte mode (experimental) saves a frame as a JPEG, corrupts its bytes and shows the result for a few frames, either every 10 frames or on beats. Louder sound means more damage. The line under it shows the frame rate and how long each step takes. It isn't saved with presets.
  * Upload your own video and audio. Uploads aren't saved with presets.
  * Presets save your slider settings under a name (letters, numbers, underscores and spaces only) in localStorage.
  * Starter presets are included, and the dropdown reopens on the last preset you chose or saved.
