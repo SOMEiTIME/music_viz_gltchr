@@ -90,6 +90,16 @@
     </div>
 
     <form>
+      <label for="byteMode">Byte mode:</label>
+      <select id="byteMode">
+        <option value="off">Off</option>
+        <option value="frames">Every 10 frames</option>
+        <option value="beats">On beats</option>
+      </select>
+      <p id="byteStats"></p>
+    </form>
+
+    <form>
       <label for="videoUpload">Video file</label>
       <input type="file" id="videoUpload" accept="video/*"/>
     </form>

@@ -2,6 +2,7 @@ import {
   copySettings, parseStoredSettings, lastPresetKey, validPresetName, presetNames, seedPresets,
 } from "./presets.js";
 import { videoDrawRect } from "./videoRect.js";
+import { beatDetector, glitchFrame, holdFrames } from "./byteMode.js";
 
 const audio1 = new Audio("audio.mp3");
 const video1 = document.getElementById("video");
@@ -115,6 +116,94 @@ function paintMirroredBars(context, rect) {
   context.restore();
 }
 
+/*Byte mode: encode a frame as JPEG, corrupt its bytes with Media-Eroder's core, decode it
+  and show it for a few frames in place of the video. It's a test of whether that is fast
+  enough, so it isn't saved in presets and reports its timings in the sidebar
+*/
+let byteMode = "off"; //"off", "frames" (every byteModeEvery frames) or "beats"
+const byteModeEvery = 10;
+const isBeat = beatDetector();
+let frameCount = 0;
+let erodeBusy = false; //one frame is glitched at a time; triggers while busy are skipped
+let erodedFrame = null; //the last glitched frame: { bitmap, framesLeft }
+const emptyStats = () => ({ frames: 0, eroded: 0, failed: 0, encode: 0, glitch: 0, decode: 0 });
+let byteStats = emptyStats();
+let byteStatsStart = performance.now();
+
+//glitches the offscreen canvas as it is now. convertToBlob takes its snapshot when called,
+//so animate() can keep drawing while this runs
+async function erodeFrame(level) {
+  erodeBusy = true;
+  try {
+    let start = performance.now();
+    const jpeg = await offscreenCanvas.convertToBlob({ type: "image/jpeg", quality: 0.8 });
+    const bytes = new Uint8Array(await jpeg.arrayBuffer());
+    let now = performance.now();
+    byteStats.encode += now - start;
+
+    start = now;
+    const glitched = glitchFrame(bytes, level);
+    now = performance.now();
+    byteStats.glitch += now - start;
+
+    start = now;
+    let bitmap = null;
+    try {
+      bitmap = glitched && await createImageBitmap(new Blob([glitched], { type: "image/jpeg" }));
+    } catch (e) {
+      //the browser refused the corrupted file
+    }
+    if (!bitmap) {
+      //the clean frame stays
+      byteStats.failed++;
+    }
+    byteStats.decode += performance.now() - start;
+    byteStats.eroded++;
+
+    if (bitmap) {
+      erodedFrame?.bitmap.close();
+      erodedFrame = { bitmap, framesLeft: holdFrames };
+    }
+  } finally {
+    erodeBusy = false;
+  }
+}
+
+//starts a glitch when byte mode's trigger fires, then draws the held glitched frame if any
+function drawByteMode() {
+  frameCount++;
+  byteStats.frames++;
+  const level = Math.max(soundDataArray[0], soundDataArray[1]);
+  const beat = isBeat(level);
+  const trigger = byteMode == "frames" ? frameCount % byteModeEvery == 0 : byteMode == "beats" && beat;
+  if (trigger && !erodeBusy) {
+    erodeFrame(level);
+  }
+
+  if (erodedFrame && erodedFrame.framesLeft > 0) {
+    erodedFrame.framesLeft--;
+    offscreenContext.drawImage(erodedFrame.bitmap, 0, 0, canvas.width, canvas.height);
+  }
+
+  const elapsed = performance.now() - byteStatsStart;
+  if (elapsed >= 1000) {
+    showByteStats(byteStats, elapsed);
+    byteStats = emptyStats();
+    byteStatsStart = performance.now();
+  }
+}
+
+function showByteStats(stats, elapsed) {
+  const perSecond = n => (n * 1000 / elapsed).toFixed(0);
+  const mean = total => stats.eroded ? (total / stats.eroded).toFixed(1) : "-";
+  //with byte mode off, the frame rate alone is the baseline to compare against
+  document.getElementById("byteStats").textContent = byteMode == "off" ? `${perSecond(stats.frames)} fps` :
+    `${perSecond(stats.frames)} fps, ${perSecond(stats.eroded)} glitched/s, ` +
+    `${stats.failed}/${stats.eroded} failed to decode, ` +
+    `ms per frame: encode ${mean(stats.encode)}, glitch ${mean(stats.glitch)}, ` +
+    `decode ${mean(stats.decode)} (${canvas.width}×${canvas.height})`;
+}
+
 //animate
 function animate() {
   let x = 0;
@@ -129,6 +218,7 @@ function animate() {
     offscreenContext.drawImage(video1, 0, 0, canvas.width, canvas.height);
   }
   analyser.getByteFrequencyData(soundDataArray);
+  drawByteMode();
 
   for (let i = 0; i < bufferLength; i++) {
     let barHeight = soundDataArray[i];
@@ -417,6 +507,9 @@ function bindControls() {
     if (e.target.value != "") {
       setToFavorite(e.target.value);
     }
+  });
+  document.getElementById("byteMode").addEventListener("input", e => {
+    byteMode = e.target.value;
   });
   document.querySelectorAll(".controlButton").forEach(button => {
     button.addEventListener("click", () => control(button));
