@@ -126,9 +126,13 @@ const isBeat = beatDetector();
 let frameCount = 0;
 let erodeBusy = false; //one frame is glitched at a time; triggers while busy are skipped
 let erodedFrame = null; //the last glitched frame: { bitmap, framesLeft }
-const emptyStats = () => ({ frames: 0, eroded: 0, failed: 0, encode: 0, glitch: 0, decode: 0 });
+//totals since byte mode last changed, so the readout averages over the whole run rather than
+//one second. slowestFps is the worst full second's frame rate
+const emptyStats = () => ({
+  frames: 0, eroded: 0, failed: 0, encode: 0, glitch: 0, decode: 0,
+  start: performance.now(), secondStart: performance.now(), secondFrames: 0, slowestFps: Infinity,
+});
 let byteStats = emptyStats();
-let byteStatsStart = performance.now();
 
 //glitches the offscreen canvas as it is now. convertToBlob takes its snapshot when called,
 //so animate() can keep drawing while this runs
@@ -173,6 +177,7 @@ async function erodeFrame(level) {
 function drawByteMode() {
   frameCount++;
   byteStats.frames++;
+  byteStats.secondFrames++;
   const level = Math.max(soundDataArray[0], soundDataArray[1]);
   const beat = isBeat(level);
   const trigger = byteMode == "frames" ? frameCount % byteModeEvery == 0 : byteMode == "beats" && beat;
@@ -185,20 +190,25 @@ function drawByteMode() {
     offscreenContext.drawImage(erodedFrame.bitmap, 0, 0, canvas.width, canvas.height);
   }
 
-  const elapsed = performance.now() - byteStatsStart;
-  if (elapsed >= 1000) {
-    showByteStats(byteStats, elapsed);
-    byteStats = emptyStats();
-    byteStatsStart = performance.now();
+  const now = performance.now();
+  if (now - byteStats.secondStart >= 1000) {
+    const fps = byteStats.secondFrames * 1000 / (now - byteStats.secondStart);
+    byteStats.slowestFps = Math.min(byteStats.slowestFps, fps);
+    byteStats.secondStart = now;
+    byteStats.secondFrames = 0;
+    showByteStats(byteStats, now);
   }
 }
 
-function showByteStats(stats, elapsed) {
+function showByteStats(stats, now) {
+  const elapsed = now - stats.start;
   const perSecond = n => (n * 1000 / elapsed).toFixed(0);
   const mean = total => stats.eroded ? (total / stats.eroded).toFixed(1) : "-";
+  const fps = `${perSecond(stats.frames)} fps (slowest second ${stats.slowestFps.toFixed(0)}) ` +
+    `over ${(elapsed / 1000).toFixed(0)} s`;
   //with byte mode off, the frame rate alone is the baseline to compare against
-  document.getElementById("byteStats").textContent = byteMode == "off" ? `${perSecond(stats.frames)} fps` :
-    `${perSecond(stats.frames)} fps, ${perSecond(stats.eroded)} glitched/s, ` +
+  document.getElementById("byteStats").textContent = byteMode == "off" ? fps :
+    `${fps}, ${perSecond(stats.eroded)} glitched/s, ` +
     `${stats.failed}/${stats.eroded} failed to decode, ` +
     `ms per frame: encode ${mean(stats.encode)}, glitch ${mean(stats.glitch)}, ` +
     `decode ${mean(stats.decode)} (${canvas.width}×${canvas.height})`;
@@ -510,6 +520,7 @@ function bindControls() {
   });
   document.getElementById("byteMode").addEventListener("input", e => {
     byteMode = e.target.value;
+    byteStats = emptyStats();
   });
   document.querySelectorAll(".controlButton").forEach(button => {
     button.addEventListener("click", () => control(button));
