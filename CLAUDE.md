@@ -17,7 +17,7 @@ No linter configured. Tests cover the DOM-free logic only, so still verify chang
 - `script.js` — everything else: canvas and `OffscreenCanvas` setup, `AudioContext` + `AnalyserNode` (fftSize 32), the `animate()` render loop, the `settings` object, and the preset UI.
 - `presets.js` — DOM-free settings and preset logic (`numericRanges`, `copySettings()`, preset name rules, `reservedKeys`, starter seeding). Functions take a Storage-like object rather than using `localStorage` directly, so tests can pass a fake (`tests/memoryStorage.js`).
 - `videoRect.js` — `videoDrawRect()`, the crop/letterbox maths.
-- `byteMode.js` — DOM-free helpers for byte mode (a frame is JPEG-encoded, its bytes corrupted, then decoded): finding where a JPEG's picture data starts, the operations per frame, beat detection. The async encode/decode pipeline is `erodeFrame()` in `script.js`. Byte mode isn't in `settings`, so it isn't saved in presets.
+- `byteMode.js` — DOM-free helpers for byte mode (a frame is JPEG-encoded, its bytes corrupted, then decoded): finding where a JPEG's picture data starts, the operations per frame, beat detection. The async encode/decode pipeline is `erodeFrame()` in `script.js`. Its sliders (`erode*`, `beat*`) are ordinary settings saved in presets, but the mode select isn't (it's a string, and presets shouldn't switch on an expensive mode).
 - `eroder/` — a copy of [Media-Eroder](https://github.com/SOMEiTIME/Media-Eroder)'s `src/core/` (from its commit `8b7eb4a`). Don't edit it here: change Media-Eroder and copy the folder over again.
 - `tests/` — Vitest tests. `data.test.js` checks that `index.html` slider ranges match `numericRanges` and that `public/presets.json` is valid, so it fails if those drift apart.
 - `stylesheet.css` — styling.
