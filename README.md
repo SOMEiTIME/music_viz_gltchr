@@ -20,6 +20,7 @@ The included video is cropped to fill the screen around its text. If you replace
 Click the menu icon to open it.
 
  * Sliders tune the effect (see below).
+ * Byte mode (experimental) saves a frame as a JPEG, corrupts its bytes and shows the result for a few frames, either every N frames or on beats. Louder sound means more damage. The line under it shows the frame rate and how long each step takes. Its sliders are saved with presets, but the mode isn't.
  * Upload your own video and audio. Uploads aren't saved with presets.
  * Presets save your slider settings under a name (letters, numbers, underscores and spaces only) in localStorage.
  * Starter presets are included, and the dropdown reopens on the last preset you chose or saved.
@@ -35,3 +36,13 @@ The picture is split into vertical strips, one per slice of the audio's frequenc
  * Fill In: the value those replaced pixels get. Low is dark, high is bright
  * Fidget: how much loud strips jitter sideways
  * Bars: draws a second copy of each strip that rises up from the bottom with the volume. 0 turns it off
+
+Byte mode's sliders:
+
+ * Every N Frames: how often "Every N frames" glitches
+ * Beat Jump: how far above its recent average the bass has to jump to count as a beat. Lower catches more beats
+ * Beat Floor: how loud the bass has to be for a beat to count
+ * Beat Rest: frames after a beat before another can count
+ * Hold: how many frames a glitched frame stays on screen
+ * Damage: how much of each frame gets corrupted
+ * Resolution: the size a frame is glitched at. Lower is faster and blockier

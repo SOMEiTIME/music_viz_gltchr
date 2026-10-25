@@ -11,6 +11,13 @@ export const numericRanges = {
   frameDataEmptyVal: [0, 255],
   adjustedGapMultiplier: [0, 1],
   vizBarHeightMultiplier: [0, 6],
+  erodeEvery: [2, 60],
+  beatJump: [1.05, 3],
+  beatFloor: [0, 255],
+  beatRest: [0, 60],
+  erodeHold: [1, 30],
+  erodeDamage: [0.1, 10],
+  erodeScale: [0.1, 1],
 };
 
 //copies stored values into settings, only for keys settings already has
