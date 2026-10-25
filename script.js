@@ -365,19 +365,19 @@ function selectPreset(presetName) {
   }
 }
 
-function addFavorite() {
-  let inputText = document.getElementById("presetName")
-  if (!validPresetName(inputText.value)) {
-    inputText.value = "";
-    inputText.placeholder = "Letters and numbers only";
-    return null;
-  }
+//runs action on the name typed in the preset field, then clears the field and shows the
+//message action returns (or a hint if the name isn't valid) as its placeholder
+function withPresetName(action) {
+  const inputText = document.getElementById("presetName");
+  const presetName = inputText.value;
+  inputText.value = "";
+  inputText.placeholder = validPresetName(presetName) ? action(presetName) : "Letters and numbers only";
+}
 
-  let presetName = inputText.value;
+function addFavorite(presetName) {
   let message = "Preset: '" + presetName;
   //if the preset already exists, overwrite it
   if (localStorage.getItem(presetName) != null) {
-    localStorage.removeItem(presetName);
     message = message + "' updated";
   } else {
     let presetSelect = document.getElementById("presetSelect");
@@ -386,19 +386,10 @@ function addFavorite() {
   }
   localStorage.setItem(presetName, JSON.stringify(settings));
   selectPreset(presetName);
-  inputText.value = "";
-  inputText.placeholder = message;
+  return message;
 }
 
-function deleteFavorite() {
-  let inputText = document.getElementById("presetName")
-  if (!validPresetName(inputText.value)) {
-    inputText.value = "";
-    inputText.placeholder = "Letters and numbers only";
-    return null;
-  }
-
-  let presetName = inputText.value;
+function deleteFavorite(presetName) {
   let message = "Preset: '" + presetName;
   if (localStorage.getItem(presetName) != null) {
     localStorage.removeItem(presetName);
@@ -417,28 +408,16 @@ function deleteFavorite() {
   } else {
     message = message + "' never existed";
   }
-  inputText.value = "";
-  inputText.placeholder = message;
+  return message;
 }
 
 function updateFavoriteLabels() {
-  let audioInfo = "";
-  if (settings.audioName != undefined) {
-    audioInfo = settings.audioName;
-  }
+  const audioInfo = settings.audioName ?? "";
+  const videoInfo = settings.videoName ?? "";
   document.getElementById("audioName").textContent = audioInfo;
-
-  let videoInfo = "";
-  if (settings.videoName != undefined) {
-    videoInfo = settings.videoName;
-  }
   document.getElementById("videoName").textContent = videoInfo;
-
-  let presetInfoLabel = "";
-  if (videoInfo != "" || audioInfo != "") {
-    presetInfoLabel = "//preset saved with:";
-  }
-  document.getElementById("presetInfoLabel").textContent = presetInfoLabel;
+  document.getElementById("presetInfoLabel").textContent =
+    videoInfo != "" || audioInfo != "" ? "//preset saved with:" : "";
 }
 
 function setToFavorite(presetName) {
@@ -502,8 +481,8 @@ function bindControls() {
   });
   document.getElementById("videoUpload").addEventListener("input", e => updateDisplay(e.target.files, "video"));
   document.getElementById("audioUpload").addEventListener("input", e => updateDisplay(e.target.files, "audio"));
-  document.querySelector('button[name="favoriteButton"]').addEventListener("click", addFavorite);
-  document.querySelector('button[name="deleteButton"]').addEventListener("click", deleteFavorite);
+  document.querySelector('button[name="favoriteButton"]').addEventListener("click", () => withPresetName(addFavorite));
+  document.querySelector('button[name="deleteButton"]').addEventListener("click", () => withPresetName(deleteFavorite));
   document.getElementById("presetSelect").addEventListener("input", e => {
     //the placeholder option has an empty value
     if (e.target.value != "") {
