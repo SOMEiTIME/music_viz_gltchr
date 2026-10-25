@@ -2,9 +2,6 @@
 //eroder/ is a copy of Media-Eroder's src/core/ (see CLAUDE.md), so don't edit it here
 import { glitch } from "./eroder/index.js";
 
-//frames a glitched frame stays on screen before the clean video comes back
-export const holdFrames = 4;
-
 //offset of the first byte after a JPEG's start-of-scan header (FF DA and its segment),
 //where the compressed picture starts. everything before it is tables the decoder needs,
 //so it's left alone. returns null if there's no start of scan
@@ -20,9 +17,10 @@ export function jpegScanStart(bytes) {
   return null;
 }
 
-//operations for one frame. louder sound (0 to 255) means more corruption
-export function frameOperations(level) {
-  const every = Math.round(60000 / (1 + level / 16));
+//operations for one frame. louder sound (0 to 255) and more damage mean more corruption
+export function frameOperations(level, damage = 1) {
+  //the core needs whole numbers of at least 1
+  const every = Math.max(1, Math.round(60000 / (damage * (1 + level / 16))));
   return [
     { type: "byte-corrupt", every },
     { type: "byte-swap", size: 16, every: every * 2 },
@@ -31,18 +29,19 @@ export function frameOperations(level) {
 
 //glitches an encoded JPEG frame, leaving its tables alone. returns null for a file
 //without a picture to corrupt
-export function glitchFrame(bytes, level, seed) {
+export function glitchFrame(bytes, level, damage, seed) {
   const headerBytes = jpegScanStart(bytes);
   if (headerBytes == null || headerBytes >= bytes.length) return null;
-  return glitch(bytes, frameOperations(level), { headerBytes, seed });
+  return glitch(bytes, frameOperations(level, damage), { headerBytes, seed });
 }
 
 //returns a function that's given the bass level each frame and says whether it's a beat:
-//a jump well above the recent average, with a few frames' rest after each one
-export function beatDetector({ ratio = 1.4, minLevel = 60, rest = 8, smoothing = 0.9 } = {}) {
+//a jump to `ratio` times the recent average and above `minLevel`, with `rest` frames
+//between beats. the options are passed each frame so sliders take effect straight away
+export function beatDetector(smoothing = 0.9) {
   let average = null;
-  let sinceBeat = rest;
-  return level => {
+  let sinceBeat = Infinity;
+  return (level, { ratio, minLevel, rest }) => {
     //start from the first level, or steady sound would count as beats while the average warms up
     average ??= level;
     const beat = sinceBeat >= rest && level > minLevel && level > average * ratio;

@@ -2,7 +2,7 @@ import {
   copySettings, parseStoredSettings, lastPresetKey, validPresetName, presetNames, seedPresets,
 } from "./presets.js";
 import { videoDrawRect } from "./videoRect.js";
-import { beatDetector, glitchFrame, holdFrames } from "./byteMode.js";
+import { beatDetector, glitchFrame } from "./byteMode.js";
 
 const audio1 = new Audio("audio.mp3");
 const video1 = document.getElementById("video");
@@ -74,6 +74,15 @@ let settings = {
   "adjustedGapMultiplier": 0.05,//.1,
   "vizBarHeightMultiplier": 0,//0.1,//2,
 
+  //byte mode (see byteMode.js). the mode itself isn't a setting, so presets never turn it on
+  "erodeEvery": 10, //frames between glitches in "every N frames"
+  "erodeHold": 4, //frames a glitched frame stays on screen
+  "erodeDamage": 1, //multiplies how much of each frame gets corrupted
+  "erodeScale": 0.5, //size the frame is glitched at, as a share of the canvas
+  "beatJump": 1.4, //how far above the recent average the bass must jump to count as a beat
+  "beatFloor": 60, //bass level a beat must be louder than
+  "beatRest": 8, //frames after a beat before the next can count
+
   /*while these can't be directly re-used from storage like the previous settings, it's
     handy to keep them around for revoking URLs
   */
@@ -117,20 +126,24 @@ function paintMirroredBars(context, rect) {
 }
 
 /*Byte mode: encode a frame as JPEG, corrupt its bytes with Media-Eroder's core, decode it
-  and show it for a few frames in place of the video. It's a test of whether that is fast
-  enough, so it isn't saved in presets and reports its timings in the sidebar
+  and show it for a few frames in place of the video. Its timings show in the sidebar, since
+  whether it's fast enough is still being tested
 */
-let byteMode = "off"; //"off", "frames" (every byteModeEvery frames) or "beats"
-const byteModeEvery = 10;
+let byteMode = "off"; //"off", "frames" (every erodeEvery frames) or "beats"
 const isBeat = beatDetector();
 let frameCount = 0;
 let erodeBusy = false; //one frame is glitched at a time; triggers while busy are skipped
 let erodedFrame = null; //the last glitched frame: { bitmap, framesLeft }
+//the frame is shrunk onto this canvas (by erodeScale) before it's encoded
+const erodeCanvas = new OffscreenCanvas(1, 1);
+const erodeContext = erodeCanvas.getContext("2d");
 //totals since byte mode last changed, so the readout averages over the whole run rather than
-//one second. slowestFps is the worst full second's frame rate
+//one second. slowestFps is the worst full second's frame rate, slowestFrame the longest gap
+//between two frames and slowestAnimate the longest animate() call, both in ms
 const emptyStats = () => ({
-  frames: 0, eroded: 0, failed: 0, encode: 0, glitch: 0, decode: 0,
+  frames: 0, eroded: 0, failed: 0, encode: 0, glitch: 0, decode: 0, draws: 0, draw: 0,
   start: performance.now(), secondStart: performance.now(), secondFrames: 0, slowestFps: Infinity,
+  lastFrame: null, slowestFrame: 0, slowestAnimate: 0,
 });
 let byteStats = emptyStats();
 
@@ -140,13 +153,16 @@ async function erodeFrame(level) {
   erodeBusy = true;
   try {
     let start = performance.now();
-    const jpeg = await offscreenCanvas.convertToBlob({ type: "image/jpeg", quality: 0.8 });
+    erodeCanvas.width = Math.max(1, Math.round(canvas.width * settings.erodeScale));
+    erodeCanvas.height = Math.max(1, Math.round(canvas.height * settings.erodeScale));
+    erodeContext.drawImage(offscreenCanvas, 0, 0, erodeCanvas.width, erodeCanvas.height);
+    const jpeg = await erodeCanvas.convertToBlob({ type: "image/jpeg", quality: 0.8 });
     const bytes = new Uint8Array(await jpeg.arrayBuffer());
     let now = performance.now();
     byteStats.encode += now - start;
 
     start = now;
-    const glitched = glitchFrame(bytes, level);
+    const glitched = glitchFrame(bytes, level, settings.erodeDamage);
     now = performance.now();
     byteStats.glitch += now - start;
 
@@ -166,7 +182,7 @@ async function erodeFrame(level) {
 
     if (bitmap) {
       erodedFrame?.bitmap.close();
-      erodedFrame = { bitmap, framesLeft: holdFrames };
+      erodedFrame = { bitmap, framesLeft: settings.erodeHold };
     }
   } finally {
     erodeBusy = false;
@@ -179,18 +195,30 @@ function drawByteMode() {
   byteStats.frames++;
   byteStats.secondFrames++;
   const level = Math.max(soundDataArray[0], soundDataArray[1]);
-  const beat = isBeat(level);
-  const trigger = byteMode == "frames" ? frameCount % byteModeEvery == 0 : byteMode == "beats" && beat;
+  const beat = isBeat(level, { ratio: settings.beatJump, minLevel: settings.beatFloor, rest: settings.beatRest });
+  const trigger = byteMode == "frames" ? frameCount % settings.erodeEvery == 0 : byteMode == "beats" && beat;
   if (trigger && !erodeBusy) {
     erodeFrame(level);
   }
 
   if (erodedFrame && erodedFrame.framesLeft > 0) {
     erodedFrame.framesLeft--;
+    const start = performance.now();
     offscreenContext.drawImage(erodedFrame.bitmap, 0, 0, canvas.width, canvas.height);
+    byteStats.draw += performance.now() - start;
+    byteStats.draws++;
   }
+}
 
+//records how long a frame took, then shows the readout once a second
+function timeFrame(animateStart) {
   const now = performance.now();
+  byteStats.slowestAnimate = Math.max(byteStats.slowestAnimate, now - animateStart);
+  if (byteStats.lastFrame != null) {
+    byteStats.slowestFrame = Math.max(byteStats.slowestFrame, animateStart - byteStats.lastFrame);
+  }
+  byteStats.lastFrame = animateStart;
+
   if (now - byteStats.secondStart >= 1000) {
     const fps = byteStats.secondFrames * 1000 / (now - byteStats.secondStart);
     byteStats.slowestFps = Math.min(byteStats.slowestFps, fps);
@@ -203,19 +231,21 @@ function drawByteMode() {
 function showByteStats(stats, now) {
   const elapsed = now - stats.start;
   const perSecond = n => (n * 1000 / elapsed).toFixed(0);
-  const mean = total => stats.eroded ? (total / stats.eroded).toFixed(1) : "-";
+  const mean = (total, count = stats.eroded) => count ? (total / count).toFixed(1) : "-";
   const fps = `${perSecond(stats.frames)} fps (slowest second ${stats.slowestFps.toFixed(0)}) ` +
-    `over ${(elapsed / 1000).toFixed(0)} s`;
+    `over ${(elapsed / 1000).toFixed(0)} s, slowest frame ${stats.slowestFrame.toFixed(0)} ms ` +
+    `(animate ${stats.slowestAnimate.toFixed(0)} ms), ${canvas.width}×${canvas.height}`;
   //with byte mode off, the frame rate alone is the baseline to compare against
   document.getElementById("byteStats").textContent = byteMode == "off" ? fps :
-    `${fps}, ${perSecond(stats.eroded)} glitched/s, ` +
-    `${stats.failed}/${stats.eroded} failed to decode, ` +
-    `ms per frame: encode ${mean(stats.encode)}, glitch ${mean(stats.glitch)}, ` +
-    `decode ${mean(stats.decode)} (${canvas.width}×${canvas.height})`;
+    `${fps}. ${perSecond(stats.eroded)} glitched/s, ` +
+    `${stats.failed}/${stats.eroded} failed to decode. ` +
+    `ms per glitch: encode ${mean(stats.encode)}, glitch ${mean(stats.glitch)}, ` +
+    `decode ${mean(stats.decode)}, draw ${mean(stats.draw, stats.draws)} per frame`;
 }
 
 //animate
 function animate() {
+  const animateStart = performance.now();
   let x = 0;
   const rect = videoDrawRect(video1.videoWidth, video1.videoHeight, canvas.width, canvas.height, videoFocus);
   if (rect) {
@@ -258,6 +288,7 @@ function animate() {
 
     x += barWidth;
   }
+  timeFrame(animateStart);
 
   setTimeout(() => {
     requestAnimationFrame(animate);
