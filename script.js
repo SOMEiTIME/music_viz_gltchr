@@ -9,9 +9,8 @@ const video1 = document.getElementById("video");
 video1.src = "video.mp4";
 
 //iOS zooms in on focused text fields and doesn't zoom back out. maximum-scale stops that, and
-//since iOS 10 Safari ignores it for pinch zoom, so users can still zoom. it's only added on
-//iOS because other browsers (Android Chrome) would block pinch zoom with it. iPads report a
-//Mac user agent, so they're caught by having touch points
+//iOS Safari ignores it for pinch zoom. other browsers (Android Chrome) would block pinch zoom
+//with it, so it's iOS only. iPads report a Mac user agent, so they're caught by touch points
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
   || (navigator.platform == "MacIntel" && navigator.maxTouchPoints > 1);
 if (isIOS) {
@@ -84,16 +83,15 @@ let settings = {
   "beatFloor": 60, //bass level a beat must be louder than
   "beatRest": 8, //frames after a beat before the next can count
 
-  /*while these can't be directly re-used from storage like the previous settings, it's
-    handy to keep them around for revoking URLs
-  */
+  //the sources are never restored from storage (see copySettings) but are kept for
+  //revoking URLs. the names show what a preset was saved with
   "videoSrc": video1.src,
   "audioSrc": audio1.src,
   "videoName": "video.mp4",
   "audioName": "audio.mp3",
 }
 
-function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
+function checkExtremes(val, maxVal, minVal = 1) {
   if (val > maxVal) {
     return maxVal;
   }
