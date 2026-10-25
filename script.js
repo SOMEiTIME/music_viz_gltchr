@@ -363,8 +363,8 @@ function selectPreset(presetName) {
   }
 }
 
-//runs action on the name typed in the preset field, then clears the field and shows the
-//message action returns (or a hint if the name isn't valid) as its placeholder
+//runs action on the typed preset name, then clears the field and shows action's message
+//(or a hint for an invalid name) as its placeholder
 function withPresetName(action) {
   const inputText = document.getElementById("presetName");
   const presetName = inputText.value;
