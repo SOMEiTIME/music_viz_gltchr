@@ -4,7 +4,8 @@ import {
 import { videoDrawRect } from "./videoRect.js";
 import { beatDetector, glitchFrame } from "./byteMode.js";
 
-const audio1 = new Audio("audio.mp3");
+const audio1 = document.getElementById("audio");
+audio1.src = "audio.mp3";
 const video1 = document.getElementById("video");
 video1.src = "video.mp4";
 
