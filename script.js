@@ -4,14 +4,14 @@ import {
 import { videoDrawRect } from "./videoRect.js";
 import { beatDetector, glitchFrame } from "./byteMode.js";
 
-const audio1 = new Audio("audio.mp3");
+const audio1 = document.getElementById("audio");
+audio1.src = "audio.mp3";
 const video1 = document.getElementById("video");
 video1.src = "video.mp4";
 
 //iOS zooms in on focused text fields and doesn't zoom back out. maximum-scale stops that, and
-//since iOS 10 Safari ignores it for pinch zoom, so users can still zoom. it's only added on
-//iOS because other browsers (Android Chrome) would block pinch zoom with it. iPads report a
-//Mac user agent, so they're caught by having touch points
+//iOS Safari ignores it for pinch zoom. other browsers (Android Chrome) would block pinch zoom
+//with it, so it's iOS only. iPads report a Mac user agent, so they're caught by touch points
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
   || (navigator.platform == "MacIntel" && navigator.maxTouchPoints > 1);
 if (isIOS) {
@@ -32,6 +32,7 @@ const offscreenContext = offscreenCanvas.getContext("2d", { willReadFrequently: 
 //what the play/pause buttons say, kept apart from the elements' paused state
 //since the browser can block autoplay
 const playing = { audio: true, video: true };
+const media = { audio: audio1, video: video1 };
 //muted video is allowed to autoplay, so the first frame shows behind the start overlay.
 //audio waits for the overlay click (see startFromOverlay)
 video1.play().catch(() => {});
@@ -83,16 +84,15 @@ let settings = {
   "beatFloor": 60, //bass level a beat must be louder than
   "beatRest": 8, //frames after a beat before the next can count
 
-  /*while these can't be directly re-used from storage like the previous settings, it's
-    handy to keep them around for revoking URLs
-  */
+  //the sources are never restored from storage (see copySettings) but are kept for
+  //revoking URLs. the names show what a preset was saved with
   "videoSrc": video1.src,
   "audioSrc": audio1.src,
   "videoName": "video.mp4",
   "audioName": "audio.mp3",
 }
 
-function checkExtremes(val, maxVal = 100000000000000, minVal = 1) {
+function checkExtremes(val, maxVal, minVal = 1) {
   if (val > maxVal) {
     return maxVal;
   }
@@ -301,63 +301,41 @@ function input(val, name) {
   populateStorage();
 }
 
-function sync(type) {
-  if (type == "audio") {
-    audio1.load();
-    if (playing.audio) {
-      audio1.play();
-    } else {
-      audio1.pause();
-    }
-  } else if (type == "video") {
-    video1.load();
-    if (playing.video) {
-      video1.play();
-    } else {
-      video1.pause();
-    }
+//plays or pauses an element to match its button
+function applyPlaying(type) {
+  if (playing[type]) {
+    media[type].play();
+  } else {
+    media[type].pause();
   }
 }
 
+//plays whatever the buttons say should be playing
+function resumePlaying() {
+  audioContext.resume();
+  if (playing.audio) audio1.play();
+  if (playing.video) video1.play();
+}
+
+//swaps in an uploaded "video" or "audio" file
 function updateDisplay(files, type) {
-  //FileList has length, not size; an empty list means the picker was cancelled
-  if (files == null || files.length == 0) {
-    return null;
-  }
-  //the accept attribute is only a hint, so check the type here too
-  if (type != "video" && type != "audio") {
-    return null;
-  }
-  if (!files[0].type.startsWith(type + "/")) {
-    return null;
-  }
-  let media = null;
-  if (type == "video") {
-    media = video1;
-  } else if (type == "audio") {
-    media = audio1;
-  } else {
-    return null;
+  //an empty list means the picker was cancelled. the accept attribute is only a hint,
+  //so check the file's type here too
+  if (files == null || files.length == 0 || !files[0].type.startsWith(type + "/")) {
+    return;
   }
 
-  let objectURL = settings[type + "Src"];
-  let oldSrc = settings[type + "Src"];
-
-  if (files != null) {
-    objectURL = URL.createObjectURL(files[0]);
-    URL.revokeObjectURL(oldSrc);
-  }
-
-  media.src = objectURL;
+  const objectURL = URL.createObjectURL(files[0]);
+  URL.revokeObjectURL(settings[type + "Src"]);
+  media[type].src = objectURL;
   if (type == "video") {
     videoFocus = null;
   }
   settings[type + "Src"] = objectURL;
-  if (files != null) {
-    settings[type + "Name"] = files[0].name;
-  }
+  settings[type + "Name"] = files[0].name;
 
-  sync(type);
+  media[type].load();
+  applyPlaying(type);
   populateStorage();
 }
 
@@ -386,19 +364,19 @@ function selectPreset(presetName) {
   }
 }
 
-function addFavorite() {
-  let inputText = document.getElementById("presetName")
-  if (!validPresetName(inputText.value)) {
-    inputText.value = "";
-    inputText.placeholder = "Letters and numbers only";
-    return null;
-  }
+//runs action on the typed preset name, then clears the field and shows action's message
+//(or a hint for an invalid name) as its placeholder
+function withPresetName(action) {
+  const inputText = document.getElementById("presetName");
+  const presetName = inputText.value;
+  inputText.value = "";
+  inputText.placeholder = validPresetName(presetName) ? action(presetName) : "Letters and numbers only";
+}
 
-  let presetName = inputText.value;
+function addFavorite(presetName) {
   let message = "Preset: '" + presetName;
   //if the preset already exists, overwrite it
   if (localStorage.getItem(presetName) != null) {
-    localStorage.removeItem(presetName);
     message = message + "' updated";
   } else {
     let presetSelect = document.getElementById("presetSelect");
@@ -407,19 +385,10 @@ function addFavorite() {
   }
   localStorage.setItem(presetName, JSON.stringify(settings));
   selectPreset(presetName);
-  inputText.value = "";
-  inputText.placeholder = message;
+  return message;
 }
 
-function deleteFavorite() {
-  let inputText = document.getElementById("presetName")
-  if (!validPresetName(inputText.value)) {
-    inputText.value = "";
-    inputText.placeholder = "Letters and numbers only";
-    return null;
-  }
-
-  let presetName = inputText.value;
+function deleteFavorite(presetName) {
   let message = "Preset: '" + presetName;
   if (localStorage.getItem(presetName) != null) {
     localStorage.removeItem(presetName);
@@ -438,28 +407,16 @@ function deleteFavorite() {
   } else {
     message = message + "' never existed";
   }
-  inputText.value = "";
-  inputText.placeholder = message;
+  return message;
 }
 
 function updateFavoriteLabels() {
-  let audioInfo = "";
-  if (settings.audioName != undefined) {
-    audioInfo = settings.audioName;
-  }
+  const audioInfo = settings.audioName ?? "";
+  const videoInfo = settings.videoName ?? "";
   document.getElementById("audioName").textContent = audioInfo;
-
-  let videoInfo = "";
-  if (settings.videoName != undefined) {
-    videoInfo = settings.videoName;
-  }
   document.getElementById("videoName").textContent = videoInfo;
-
-  let presetInfoLabel = "";
-  if (videoInfo != "" || audioInfo != "") {
-    presetInfoLabel = "//preset saved with:";
-  }
-  document.getElementById("presetInfoLabel").textContent = presetInfoLabel;
+  document.getElementById("presetInfoLabel").textContent =
+    videoInfo != "" || audioInfo != "" ? "//preset saved with:" : "";
 }
 
 function setToFavorite(presetName) {
@@ -508,30 +465,12 @@ function loadSelections() {
   presetSelect.value = localStorage.getItem(lastPresetKey) || "";
 }
 
-let onState = "| >"
-//play/pause buttons
+//play/pause buttons. the label shows the action a click takes: "| |" pauses, "| >" plays
 function control(button) {
-  let buttonName = button.value;
-  if (buttonName.includes("| |")) {
-    buttonName = buttonName.replace("| |", onState);
-    if (buttonName.includes("AUDIO")) {
-      audio1.pause();
-      playing.audio = false;
-    } else {
-      video1.pause();
-      playing.video = false;
-    }
-  } else if (buttonName.includes(onState)) {
-    buttonName = buttonName.replace(onState, "| |");
-    if (buttonName.includes("AUDIO")) {
-      audio1.play();
-      playing.audio = true;
-    } else {
-      video1.play();
-      playing.video = true;
-    }
-  }
-  button.value = buttonName;
+  const type = button.value.includes("AUDIO") ? "audio" : "video";
+  playing[type] = !button.value.includes("| |");
+  button.value = playing[type] ? button.value.replace("| >", "| |") : button.value.replace("| |", "| >");
+  applyPlaying(type);
 }
 
 //wire up controls here rather than with inline handlers so a strict CSP can be used
@@ -541,8 +480,8 @@ function bindControls() {
   });
   document.getElementById("videoUpload").addEventListener("input", e => updateDisplay(e.target.files, "video"));
   document.getElementById("audioUpload").addEventListener("input", e => updateDisplay(e.target.files, "audio"));
-  document.querySelector('button[name="favoriteButton"]').addEventListener("click", addFavorite);
-  document.querySelector('button[name="deleteButton"]').addEventListener("click", deleteFavorite);
+  document.querySelector('button[name="favoriteButton"]').addEventListener("click", () => withPresetName(addFavorite));
+  document.querySelector('button[name="deleteButton"]').addEventListener("click", () => withPresetName(deleteFavorite));
   document.getElementById("presetSelect").addEventListener("input", e => {
     //the placeholder option has an empty value
     if (e.target.value != "") {
@@ -666,24 +605,15 @@ function bindBackgroundPause() {
       audio1.pause();
       video1.pause();
     } else if (document.getElementById("startOverlay").classList.contains("hidden")) {
-      audioContext.resume();
-      if (playing.audio) audio1.play();
-      if (playing.video) video1.play();
+      resumePlaying();
     }
   });
 }
 
 //the click is the user gesture browsers require before audio can run
 function startFromOverlay() {
-  const overlay = document.getElementById("startOverlay");
-  audioContext.resume();
-  if (playing.audio) {
-    audio1.play();
-  }
-  if (playing.video) {
-    video1.play();
-  }
-  overlay.classList.add("hidden");
+  resumePlaying();
+  document.getElementById("startOverlay").classList.add("hidden");
 }
 
 window.onload = async () => {

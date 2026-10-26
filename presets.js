@@ -36,7 +36,7 @@ export function copySettings(settings, newSettings) {
       }
       return;
     }
-    //media sources are never restored from storage (see comment on settings in script.js)
+    //media sources are never restored: uploads are object URLs that don't outlive the page
     if (name === "videoSrc" || name === "audioSrc") {
       return;
     }

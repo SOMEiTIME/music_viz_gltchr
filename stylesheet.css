@@ -51,7 +51,6 @@ html, body {
     opacity: 60%;
     box-shadow: 0px 0px 50px black;
     font-family: Times New Roman;
-    font-optical-sizing: 10px;
     /* short screens (phones in landscape) can't fit every control */
     overflow-x: hidden;
     overflow-y: auto;
@@ -145,8 +144,6 @@ input:hover {
   cursor: pointer;
   position: absolute;
   z-index: 99;
-  height: 100%;
-  width: 100%;
   top: calc(22px + env(safe-area-inset-top));
   left: calc(15px + env(safe-area-inset-left));
   height: 22px;
@@ -164,40 +161,24 @@ input:hover {
 .spinner:hover {
   opacity: 90%;
 }
-.horizontal {
-  transition: all 0.3s;
-  box-sizing: border-box;
+.horizontal,
+.diagonal.part-2 {
   position: relative;
   float: left;
   margin-top: 3px;
 }
 .diagonal.part-1 {
   position: relative;
-  transition: all 0.3s;
-  box-sizing: border-box;
   float: left;
-}
-.diagonal.part-2 {
-  transition: all 0.3s;
-  box-sizing: border-box;
-  position: relative;
-  float: left;
-  margin-top: 3px;
 }
 input[type=checkbox]:checked ~ .sidebarIconToggle > .horizontal {
-  transition: all 0.3s;
-  box-sizing: border-box;
   opacity: 0;
 }
 input[type=checkbox]:checked ~ .sidebarIconToggle > .diagonal.part-1 {
-  transition: all 0.3s;
-  box-sizing: border-box;
   transform: rotate(135deg);
   margin-top: 8px;
 }
 input[type=checkbox]:checked ~ .sidebarIconToggle > .diagonal.part-2 {
-  transition: all 0.3s;
-  box-sizing: border-box;
   transform: rotate(-135deg);
   margin-top: -9px;
   opacity: 0;
@@ -262,7 +243,6 @@ button:hover {
 .controlButton:hover {
   opacity: 80%;
   box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
-  text-size-adjust: 16px;
   font-style: italic;
 }
 
