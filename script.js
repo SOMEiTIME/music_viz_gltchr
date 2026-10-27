@@ -64,6 +64,11 @@ const beatDataArray = new Uint8Array(beatAnalyser.frequencyBinCount);
 //bins up to about 150 Hz, where kick drums are. bin 0 (down to 0 Hz) is skipped
 const bassBins = Math.max(1, Math.round(150 / (audioContext.sampleRate / beatAnalyser.fftSize)));
 
+//the bass level a beat must be louder than, from Beat Reactivity
+function beatFloor() {
+  return (1 - settings.beatReactivity) * 255;
+}
+
 //the bass level, 0 to 255, for beat detection
 function bassLevel() {
   beatAnalyser.getByteFrequencyData(beatDataArray);
@@ -101,9 +106,8 @@ let settings = {
   "erodeHold": 4, //frames a glitched frame stays on screen
   "erodeDamage": 1, //multiplies how much of each frame gets corrupted
   "erodeScale": 0.5, //size the frame is glitched at, as a share of the canvas
-  "beatJump": 1.4, //how far above the recent average the bass must jump to count as a beat
-  "beatFloor": 60, //bass level a beat must be louder than
-  "beatRest": 8, //frames after a beat before the next can count
+  "beatJump": 1.25, //1.4, //how far above the recent average the bass must jump to count as a beat
+  "beatReactivity": 0.75, //how quiet the bass can be and still beat: 0 needs it at full volume, 1 any level
 
   //the sources are never restored from storage (see copySettings) but are kept for
   //revoking URLs. the names show what a preset was saved with
@@ -219,7 +223,8 @@ function drawByteMode() {
   byteStats.secondFrames++;
   const level = Math.max(soundDataArray[0], soundDataArray[1]);
   const bass = bassLevel();
-  const beat = isBeat(bass, { ratio: settings.beatJump, minLevel: settings.beatFloor, rest: settings.beatRest });
+  //no new beat while the last glitch is still on screen
+  const beat = isBeat(bass, { ratio: settings.beatJump, minLevel: beatFloor(), rest: settings.erodeHold });
   if (beat) byteStats.beats++;
   byteStats.loudestBass = Math.max(byteStats.loudestBass, bass);
   const trigger = byteMode == "frames" ? frameCount % settings.erodeEvery == 0 : byteMode == "beats" && beat;
@@ -262,12 +267,12 @@ function showByteStats(stats, now) {
   const fps = `${perSecond(stats.frames)} fps (slowest second ${stats.slowestFps.toFixed(0)}) ` +
     `over ${(elapsed / 1000).toFixed(0)} s, slowest frame ${stats.slowestFrame.toFixed(0)} ms ` +
     `(animate ${stats.slowestAnimate.toFixed(0)} ms), ${canvas.width}×${canvas.height}`;
-  //what a beat needs right now, for tuning Beat Jump and Beat Floor
+  //what a beat needs right now, for tuning Beat Jump and Beat Reactivity
   const average = isBeat.average ?? 0;
   const beats = byteMode != "beats" ? "" :
     ` ${(stats.beats * 1000 / elapsed).toFixed(1)} beats/s. Loudest bass this second ` +
     `${stats.loudestBass.toFixed(0)}, average ${average.toFixed(0)}: a beat needs above ` +
-    `${Math.max(settings.beatFloor, average * settings.beatJump).toFixed(0)}.`;
+    `${Math.max(beatFloor(), average * settings.beatJump).toFixed(0)}.`;
   //with byte mode off, the frame rate alone is the baseline to compare against
   document.getElementById("byteStats").textContent = byteMode == "off" ? fps :
     `${fps}.${beats} ${perSecond(stats.eroded)} glitched/s, ` +
@@ -326,6 +331,14 @@ function animate() {
   setTimeout(() => {
     requestAnimationFrame(animate);
   }, 1000 / fps);
+}
+
+//switches byte mode and shows only the sliders that mode uses
+function setByteMode(mode) {
+  byteMode = mode;
+  document.querySelectorAll("[data-byte-modes]").forEach(element => {
+    element.hidden = !element.dataset.byteModes.split(" ").includes(mode);
+  });
 }
 
 /*Inputs*/
@@ -521,9 +534,19 @@ function bindControls() {
       setToFavorite(e.target.value);
     }
   });
-  document.getElementById("byteMode").addEventListener("input", e => {
-    byteMode = e.target.value;
+  const byteModeSelect = document.getElementById("byteMode");
+  byteModeSelect.addEventListener("input", () => {
+    setByteMode(byteModeSelect.value);
     byteStats = emptyStats();
+  });
+  //browsers can restore the select's last value on reload, so start from it
+  setByteMode(byteModeSelect.value);
+
+  const debugToggle = document.getElementById("debugToggle");
+  debugToggle.addEventListener("click", () => {
+    const show = debugToggle.getAttribute("aria-pressed") != "true";
+    debugToggle.setAttribute("aria-pressed", show);
+    document.getElementById("byteStats").hidden = !show;
   });
   document.querySelectorAll(".controlButton").forEach(button => {
     button.addEventListener("click", () => control(button));
