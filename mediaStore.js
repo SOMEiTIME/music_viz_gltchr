@@ -40,3 +40,8 @@ export function saveMedia(type, file) {
 export function loadMedia(type) {
   return withStore("readonly", store => store.get(type));
 }
+
+//forgets both saved files
+export function clearMedia() {
+  return withStore("readwrite", store => store.clear());
+}
