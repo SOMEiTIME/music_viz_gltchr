@@ -84,6 +84,15 @@ describe("beatDetector", () => {
     expect(quiet(40, options)).toBe(false);
   });
 
+  it("exposes the recent average", () => {
+    const isBeat = beatDetector();
+    expect(isBeat.average).toBe(null);
+    for (let i = 0; i < 50; i++) isBeat(100, options);
+    expect(isBeat.average).toBeCloseTo(100);
+    isBeat(200, options);
+    expect(isBeat.average).toBeGreaterThan(100);
+  });
+
   it("uses the options it's given each frame", () => {
     const isBeat = beatDetector();
     for (let i = 0; i < 20; i++) isBeat(100, options);
