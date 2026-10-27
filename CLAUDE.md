@@ -17,6 +17,7 @@ No linter configured. Tests cover the DOM-free logic only, so still verify chang
 - `script.js` — everything else: canvas and `OffscreenCanvas` setup, `AudioContext` + `AnalyserNode` (fftSize 32, drives the strips) chained after a second one for byte mode's beats (fftSize 1024, unsmoothed), the `animate()` render loop, the `settings` object, and the preset UI.
 - `presets.js` — DOM-free settings and preset logic (`numericRanges`, `copySettings()`, preset name rules, `reservedKeys`, starter seeding). Functions take a Storage-like object rather than using `localStorage` directly, so tests can pass a fake (`tests/memoryStorage.js`).
 - `videoRect.js` — `videoDrawRect()`, the crop/letterbox maths.
+- `mediaStore.js` — keeps the last uploaded video and audio in IndexedDB (`saveMedia()`/`loadMedia()`); `restoreMedia()` in `script.js` plays them again at startup. Not unit tested, since Node has no IndexedDB.
 - `byteMode.js` — DOM-free helpers for byte mode (a frame is JPEG-encoded, its bytes corrupted, then decoded): finding where a JPEG's picture data starts, the operations per frame, beat detection. The async encode/decode pipeline is `erodeFrame()` in `script.js`. Its sliders (`erode*`, `beat*`) are ordinary settings saved in presets, but the mode select isn't (it's a string, and presets shouldn't switch on an expensive mode).
 - `eroder/` — a copy of [Media-Eroder](https://github.com/SOMEiTIME/Media-Eroder)'s `src/core/` (from its commit `8b7eb4a`). Don't edit it here: change Media-Eroder and copy the folder over again.
 - `tests/` — Vitest tests. `data.test.js` checks that `index.html` slider ranges match `numericRanges` and that `public/presets.json` is valid, so it fails if those drift apart.
@@ -35,7 +36,7 @@ No linter configured. Tests cover the DOM-free logic only, so still verify chang
       return [k, preset];
     })), null, 2))
   ```
-- User-uploaded files are used via object URLs (`videoSrc`/`audioSrc` in `settings`), so they can't be restored from storage. Revoke old URLs when swapping.
+- User-uploaded files play via object URLs (`videoSrc`/`audioSrc` in `settings`), which die with the page, so the files themselves are kept in IndexedDB (`mediaStore.js`) and get new URLs at startup. Revoke old URLs when swapping (`useMedia()` does). At startup `videoName`/`audioName` are reset to what's actually playing, overriding the names the last preset was saved with.
 - Preset names are validated by a `^[\s\w]*$` pattern; keep that in mind if names are changed or shown in the DOM.
 - The `settings` object carries trailing comments with older default values (e.g. `//2`, `//.09`). They are tuning history, so leave them in.
 

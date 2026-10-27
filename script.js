@@ -3,6 +3,7 @@ import {
 } from "./presets.js";
 import { videoDrawRect } from "./videoRect.js";
 import { beatDetector, glitchFrame } from "./byteMode.js";
+import { loadMedia, saveMedia } from "./mediaStore.js";
 
 const audio1 = document.getElementById("audio");
 audio1.src = "audio.mp3";
@@ -350,26 +351,58 @@ function resumePlaying() {
   if (playing.video) video1.play();
 }
 
-//swaps in an uploaded "video" or "audio" file
+//swaps in an uploaded "video" or "audio" file, and keeps it for the next visit
 function updateDisplay(files, type) {
   //an empty list means the picker was cancelled. the accept attribute is only a hint,
   //so check the file's type here too
   if (files == null || files.length == 0 || !files[0].type.startsWith(type + "/")) {
     return;
   }
+  useMedia(type, files[0], files[0].name);
+  //if it can't be kept (storage full or blocked), it still plays until the page closes
+  saveMedia(type, files[0]).catch(() => {});
+}
 
-  const objectURL = URL.createObjectURL(files[0]);
+//plays a file (Blob) as the "video" or "audio" in place of the current one
+function useMedia(type, blob, name) {
+  const objectURL = URL.createObjectURL(blob);
   URL.revokeObjectURL(settings[type + "Src"]);
   media[type].src = objectURL;
   if (type == "video") {
     videoFocus = null;
   }
   settings[type + "Src"] = objectURL;
-  settings[type + "Name"] = files[0].name;
+  settings[type + "Name"] = name;
 
   media[type].load();
-  applyPlaying(type);
+  if (document.getElementById("startOverlay").classList.contains("hidden")) {
+    applyPlaying(type);
+  } else if (type == "video") {
+    //before the start click only muted video may play (audio waits for startFromOverlay)
+    video1.play().catch(() => {});
+  }
   populateStorage();
+}
+
+//brings back the files uploaded on an earlier visit. the names shown are then the files
+//actually playing, whatever the last preset was saved with
+async function restoreMedia() {
+  const defaultNames = { video: "video.mp4", audio: "audio.mp3" };
+  for (const type of ["video", "audio"]) {
+    let saved;
+    try {
+      saved = await loadMedia(type);
+    } catch (e) {
+      //storage is blocked or broken, so the bundled file stays
+    }
+    if (saved) {
+      useMedia(type, saved.blob, saved.name);
+    } else {
+      settings[type + "Name"] = defaultNames[type];
+    }
+  }
+  populateStorage();
+  updateFavoriteLabels();
 }
 
 /* Local storage for presets*/
@@ -659,6 +692,7 @@ window.onload = async () => {
   //session that never picked a preset
   const lastPreset = localStorage.getItem(lastPresetKey);
   setToFavorite(lastPreset != null && localStorage.getItem(lastPreset) != null ? lastPreset : "current");
+  await restoreMedia();
   animate();
   await seedStarterPresets();
   loadSelections();
