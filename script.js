@@ -45,11 +45,32 @@ const analyser = new AnalyserNode(audioContext, {
   maxDecibels: -30,
   minDecibels: -100,
 });
-audioContext.createMediaElementSource(audio1).connect(analyser);
+//byte mode's beats get their own analyser: the one above smooths away the jumps a beat is,
+//its lowest bins reach well above the bass, and loud music pins them at 255. analysers pass
+//the sound through unchanged, so the two are chained
+const beatAnalyser = new AnalyserNode(audioContext, {
+  fftSize: 1024,
+  smoothingTimeConstant: 0,
+  maxDecibels: -10,
+  minDecibels: -90,
+});
+audioContext.createMediaElementSource(audio1).connect(beatAnalyser);
+beatAnalyser.connect(analyser);
 analyser.connect(audioContext.destination);
 
 const bufferLength = analyser.frequencyBinCount;
 const soundDataArray = new Uint8Array(bufferLength);
+const beatDataArray = new Uint8Array(beatAnalyser.frequencyBinCount);
+//bins up to about 150 Hz, where kick drums are. bin 0 (down to 0 Hz) is skipped
+const bassBins = Math.max(1, Math.round(150 / (audioContext.sampleRate / beatAnalyser.fftSize)));
+
+//the bass level, 0 to 255, for beat detection
+function bassLevel() {
+  beatAnalyser.getByteFrequencyData(beatDataArray);
+  let total = 0;
+  for (let i = 1; i <= bassBins; i++) total += beatDataArray[i];
+  return total / bassBins;
+}
 let barWidth = canvas.width / bufferLength;
 
 //keep the canvases matched to the window, including when a phone or tablet rotates
@@ -139,9 +160,11 @@ const erodeCanvas = new OffscreenCanvas(1, 1);
 const erodeContext = erodeCanvas.getContext("2d");
 //totals since byte mode last changed, so the readout averages over the whole run rather than
 //one second. slowestFps is the worst full second's frame rate, slowestFrame the longest gap
-//between two frames and slowestAnimate the longest animate() call, both in ms
+//between two frames and slowestAnimate the longest animate() call, both in ms. loudestBass
+//is the highest bass level in the last second
 const emptyStats = () => ({
   frames: 0, eroded: 0, failed: 0, encode: 0, glitch: 0, decode: 0, draws: 0, draw: 0,
+  beats: 0, loudestBass: 0,
   start: performance.now(), secondStart: performance.now(), secondFrames: 0, slowestFps: Infinity,
   lastFrame: null, slowestFrame: 0, slowestAnimate: 0,
 });
@@ -195,7 +218,10 @@ function drawByteMode() {
   byteStats.frames++;
   byteStats.secondFrames++;
   const level = Math.max(soundDataArray[0], soundDataArray[1]);
-  const beat = isBeat(level, { ratio: settings.beatJump, minLevel: settings.beatFloor, rest: settings.beatRest });
+  const bass = bassLevel();
+  const beat = isBeat(bass, { ratio: settings.beatJump, minLevel: settings.beatFloor, rest: settings.beatRest });
+  if (beat) byteStats.beats++;
+  byteStats.loudestBass = Math.max(byteStats.loudestBass, bass);
   const trigger = byteMode == "frames" ? frameCount % settings.erodeEvery == 0 : byteMode == "beats" && beat;
   if (trigger && !erodeBusy) {
     erodeFrame(level);
@@ -225,6 +251,7 @@ function timeFrame(animateStart) {
     byteStats.secondStart = now;
     byteStats.secondFrames = 0;
     showByteStats(byteStats, now);
+    byteStats.loudestBass = 0;
   }
 }
 
@@ -235,9 +262,15 @@ function showByteStats(stats, now) {
   const fps = `${perSecond(stats.frames)} fps (slowest second ${stats.slowestFps.toFixed(0)}) ` +
     `over ${(elapsed / 1000).toFixed(0)} s, slowest frame ${stats.slowestFrame.toFixed(0)} ms ` +
     `(animate ${stats.slowestAnimate.toFixed(0)} ms), ${canvas.width}×${canvas.height}`;
+  //what a beat needs right now, for tuning Beat Jump and Beat Floor
+  const average = isBeat.average ?? 0;
+  const beats = byteMode != "beats" ? "" :
+    ` ${(stats.beats * 1000 / elapsed).toFixed(1)} beats/s. Loudest bass this second ` +
+    `${stats.loudestBass.toFixed(0)}, average ${average.toFixed(0)}: a beat needs above ` +
+    `${Math.max(settings.beatFloor, average * settings.beatJump).toFixed(0)}.`;
   //with byte mode off, the frame rate alone is the baseline to compare against
   document.getElementById("byteStats").textContent = byteMode == "off" ? fps :
-    `${fps}. ${perSecond(stats.eroded)} glitched/s, ` +
+    `${fps}.${beats} ${perSecond(stats.eroded)} glitched/s, ` +
     `${stats.failed}/${stats.eroded} failed to decode. ` +
     `ms per glitch: encode ${mean(stats.encode)}, glitch ${mean(stats.glitch)}, ` +
     `decode ${mean(stats.decode)}, draw ${mean(stats.draw, stats.draws)} per frame`;
