@@ -2,7 +2,8 @@ import {
   copySettings, parseStoredSettings, lastPresetKey, validPresetName, presetNames, seedPresets,
 } from "./presets.js";
 import { videoDrawRect } from "./videoRect.js";
-import { beatDetector, glitchFrame } from "./byteMode.js";
+import { drawBars } from "./bars.js";
+import { beatDetector } from "./byteMode.js";
 
 const audio1 = document.getElementById("audio");
 audio1.src = "audio.mp3";
@@ -58,8 +59,7 @@ audioContext.createMediaElementSource(audio1).connect(beatAnalyser);
 beatAnalyser.connect(analyser);
 analyser.connect(audioContext.destination);
 
-const bufferLength = analyser.frequencyBinCount;
-const soundDataArray = new Uint8Array(bufferLength);
+const soundDataArray = new Uint8Array(analyser.frequencyBinCount);
 const beatDataArray = new Uint8Array(beatAnalyser.frequencyBinCount);
 //bins up to about 150 Hz, where kick drums are. bin 0 (down to 0 Hz) is skipped
 const bassBins = Math.max(1, Math.round(150 / (audioContext.sampleRate / beatAnalyser.fftSize)));
@@ -76,7 +76,9 @@ function bassLevel() {
   for (let i = 1; i <= bassBins; i++) total += beatDataArray[i];
   return total / bassBins;
 }
-let barWidth = canvas.width / bufferLength;
+//what the visible canvas shows, kept between frames since the bars leave gaps that show
+//the last frame
+let barsImage = new ImageData(canvas.width, canvas.height);
 
 //keep the canvases matched to the window, including when a phone or tablet rotates
 function resizeCanvas() {
@@ -84,11 +86,9 @@ function resizeCanvas() {
   canvas.height = window.innerHeight;
   offscreenCanvas.width = canvas.width;
   offscreenCanvas.height = canvas.height;
-  barWidth = canvas.width / bufferLength;
+  barsImage = new ImageData(canvas.width, canvas.height);
 }
 window.addEventListener("resize", resizeCanvas);
-
-const fps = 120;
 
 let settings = {
   "frameDataIncrement": 7, //2
@@ -115,17 +115,6 @@ let settings = {
   "audioSrc": audio1.src,
   "videoName": "video.mp4",
   "audioName": "audio.mp3",
-}
-
-function checkExtremes(val, maxVal, minVal = 1) {
-  if (val > maxVal) {
-    return maxVal;
-  }
-  if (val < minVal) {
-    return minVal;
-  }
-
-  return val;
 }
 
 //edges of the bundled video's text column, as fractions of its width (in pixels: 526 to
@@ -159,9 +148,7 @@ const isBeat = beatDetector();
 let frameCount = 0;
 let erodeBusy = false; //one frame is glitched at a time; triggers while busy are skipped
 let erodedFrame = null; //the last glitched frame: { bitmap, framesLeft }
-//the frame is shrunk onto this canvas (by erodeScale) before it's encoded
-const erodeCanvas = new OffscreenCanvas(1, 1);
-const erodeContext = erodeCanvas.getContext("2d");
+const erodeWorker = new Worker(new URL("./erodeWorker.js", import.meta.url), { type: "module" });
 //totals since byte mode last changed, so the readout averages over the whole run rather than
 //one second. slowestFps is the worst full second's frame rate, slowestFrame the longest gap
 //between two frames and slowestAnimate the longest animate() call, both in ms. loudestBass
@@ -174,42 +161,34 @@ const emptyStats = () => ({
 });
 let byteStats = emptyStats();
 
-//glitches the offscreen canvas as it is now. convertToBlob takes its snapshot when called,
-//so animate() can keep drawing while this runs
+//glitches the offscreen canvas as it is now, shrunk by erodeScale. createImageBitmap takes its
+//snapshot when called, so animate() can keep drawing while this and the worker run
 async function erodeFrame(level) {
   erodeBusy = true;
   try {
-    let start = performance.now();
-    erodeCanvas.width = Math.max(1, Math.round(canvas.width * settings.erodeScale));
-    erodeCanvas.height = Math.max(1, Math.round(canvas.height * settings.erodeScale));
-    erodeContext.drawImage(offscreenCanvas, 0, 0, erodeCanvas.width, erodeCanvas.height);
-    const jpeg = await erodeCanvas.convertToBlob({ type: "image/jpeg", quality: 0.8 });
-    const bytes = new Uint8Array(await jpeg.arrayBuffer());
-    let now = performance.now();
-    byteStats.encode += now - start;
-
-    start = now;
-    const glitched = glitchFrame(bytes, level, settings.erodeDamage);
-    now = performance.now();
-    byteStats.glitch += now - start;
-
-    start = now;
-    let bitmap = null;
-    try {
-      bitmap = glitched && await createImageBitmap(new Blob([glitched], { type: "image/jpeg" }));
-    } catch (e) {
-      //the browser refused the corrupted file
-    }
-    if (!bitmap) {
-      //the clean frame stays
-      byteStats.failed++;
-    }
-    byteStats.decode += performance.now() - start;
+    const start = performance.now();
+    const frame = await createImageBitmap(offscreenCanvas, {
+      resizeWidth: Math.max(1, Math.round(canvas.width * settings.erodeScale)),
+      resizeHeight: Math.max(1, Math.round(canvas.height * settings.erodeScale)),
+    });
+    const snapshot = performance.now() - start;
+    const { bitmap, encode, glitch, decode } = await new Promise(resolve => {
+      erodeWorker.onmessage = e => resolve(e.data);
+      erodeWorker.postMessage({
+        frame, level, damage: settings.erodeDamage, width: canvas.width, height: canvas.height,
+      }, [frame]);
+    });
+    byteStats.encode += snapshot + encode;
+    byteStats.glitch += glitch;
+    byteStats.decode += decode;
     byteStats.eroded++;
 
     if (bitmap) {
       erodedFrame?.bitmap.close();
       erodedFrame = { bitmap, framesLeft: settings.erodeHold };
+    } else {
+      //the browser refused the corrupted file, so the clean frame stays
+      byteStats.failed++;
     }
   } finally {
     erodeBusy = false;
@@ -284,7 +263,6 @@ function showByteStats(stats, now) {
 //animate
 function animate() {
   const animateStart = performance.now();
-  let x = 0;
   const rect = videoDrawRect(video1.videoWidth, video1.videoHeight, canvas.width, canvas.height, videoFocus);
   if (rect) {
     //drawImage leaves the letterbox bars untouched, so start from black and mirror into them
@@ -298,39 +276,13 @@ function animate() {
   analyser.getByteFrequencyData(soundDataArray);
   drawByteMode();
 
-  for (let i = 0; i < bufferLength; i++) {
-    let barHeight = soundDataArray[i];
-    if (barHeight == 0) {
-      barHeight = 1;
-    }
-
-    let imageY = checkExtremes(0 + barHeight * settings.gapMultiplier, canvas.height);
-    let imageWidth = checkExtremes(barWidth - barHeight * settings.gapMultiplier, canvas.height);
-
-    let frame = offscreenContext.getImageData(x, imageY, imageWidth, canvas.height);
-
-    let frameData = frame.data;
-    for (let k = 0; k < frameData.length; k += settings.frameDataIncrement) {
-      let newVal = frameData[k + (barHeight * settings.frameDataGapMultiplier)]
-      newVal = newVal + barHeight * settings.frameDataOffsetMultiplier;
-
-      if (newVal > settings.frameDataHighCutoff || newVal < settings.frameDataLowCutoff) {
-        newVal = settings.frameDataEmptyVal;
-      }
-
-      frameData[k] = newVal;
-    }
-
-    canvasContext.putImageData(frame, x + (barHeight * settings.adjustedGapMultiplier), 0);
-    canvasContext.putImageData(frame, x, canvas.height - (settings.vizBarHeightMultiplier * barHeight));
-
-    x += barWidth;
-  }
+  //one readback and one put per frame (see bars.js)
+  const frame = offscreenContext.getImageData(0, 0, canvas.width, canvas.height);
+  drawBars(frame.data, barsImage.data, canvas.width, canvas.height, soundDataArray, settings);
+  canvasContext.putImageData(barsImage, 0, 0);
   timeFrame(animateStart);
 
-  setTimeout(() => {
-    requestAnimationFrame(animate);
-  }, 1000 / fps);
+  requestAnimationFrame(animate);
 }
 
 //switches byte mode and shows only the sliders that mode uses
