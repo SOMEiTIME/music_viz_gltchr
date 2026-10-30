@@ -20,7 +20,8 @@ The included video is cropped to fill the screen around its text. If you replace
 Click the menu icon to open it.
 
  * Sliders tune the effect (see below).
- * Byte mode (experimental) saves a frame as a JPEG, corrupts its bytes and shows the result for a few frames, either every N frames or on beats. Louder sound means more damage. The line under it shows the frame rate and how long each step takes, and on beats also how loud the bass is and what a beat needs, to help set the beat sliders. Its sliders are saved with presets, but the mode isn't.
+ * Byte mode (experimental) saves a frame as a JPEG, corrupts its bytes and shows the result for a few frames, either every N frames or on beats. Louder sound means more damage. Only the sliders the chosen mode uses are shown. They're saved with presets, but the mode isn't.
+ * Debug (top right) shows the frame rate and, with byte mode on, how long each step takes. On beats it also shows how loud the bass is and what a beat needs, to help set the beat sliders.
  * Upload your own video and audio. The last ones you uploaded are kept in the browser and come back when the page reloads. They aren't saved with presets. Use default media goes back to the included files.
  * Presets save your slider settings under a name (letters, numbers, underscores and spaces only) in localStorage.
  * Starter presets are included, and the dropdown reopens on the last preset you chose or saved.
@@ -41,8 +42,7 @@ Byte mode's sliders:
 
  * Every N Frames: how often "Every N frames" glitches
  * Beat Jump: how far above its recent average the bass has to jump to count as a beat. Lower catches more beats
- * Beat Floor: how loud the bass has to be for a beat to count
- * Beat Rest: frames after a beat before another can count
- * Hold: how many frames a glitched frame stays on screen
+ * Beat Reactivity: how quiet the bass can be and still count as a beat. Higher reacts to quieter music, lower ignores quiet passages
+ * Hold: how many frames a glitched frame stays on screen. No new beat counts until it's gone
  * Damage: how much of each frame gets corrupted
  * Resolution: the size a frame is glitched at. Lower is faster and blockier

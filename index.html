@@ -33,6 +33,10 @@
 
   <div id="sidebarMenu">
     <ul class="sidebarMenuInner">
+    <div id="debugBox">
+      <button type="button" id="debugToggle" aria-pressed="false">Debug</button>
+      <p id="byteStats" hidden></p>
+    </div>
     <p></p>
     <div>
       <input type="range" id="frameDataIncrement" name="frameDataIncrement"
@@ -95,46 +99,40 @@
         <option value="frames">Every N frames</option>
         <option value="beats">On beats</option>
       </select>
-      <p id="byteStats"></p>
     </form>
 
-    <div>
+    <!-- data-byte-modes: the byte modes a slider is shown in -->
+    <div data-byte-modes="frames">
       <input type="range" id="erodeEvery" name="erodeEvery"
              min="2" max="60" step="1">
       <label for="erodeEvery">Every N Frames</label>
     </div>
 
-    <div>
+    <div data-byte-modes="beats">
       <input type="range" id="beatJump" name="beatJump"
-             min="1.05" max="3" step=".05">
+             min="1" max="1.5" step=".01">
       <label for="beatJump">Beat Jump</label>
     </div>
 
-    <div>
-      <input type="range" id="beatFloor" name="beatFloor"
-             min="0" max="255" step="1">
-      <label for="beatFloor">Beat Floor</label>
+    <div data-byte-modes="beats">
+      <input type="range" id="beatReactivity" name="beatReactivity"
+             min="0" max="1" step=".01">
+      <label for="beatReactivity">Beat Reactivity</label>
     </div>
 
-    <div>
-      <input type="range" id="beatRest" name="beatRest"
-             min="0" max="60" step="1">
-      <label for="beatRest">Beat Rest</label>
-    </div>
-
-    <div>
+    <div data-byte-modes="frames beats">
       <input type="range" id="erodeHold" name="erodeHold"
              min="1" max="30" step="1">
       <label for="erodeHold">Hold</label>
     </div>
 
-    <div>
+    <div data-byte-modes="frames beats">
       <input type="range" id="erodeDamage" name="erodeDamage"
              min="0.1" max="10" step=".1">
       <label for="erodeDamage">Damage</label>
     </div>
 
-    <div>
+    <div data-byte-modes="frames beats">
       <input type="range" id="erodeScale" name="erodeScale"
              min="0.1" max="1" step=".05">
       <label for="erodeScale">Resolution</label>
