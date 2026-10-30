@@ -22,7 +22,7 @@ Click the menu icon to open it.
  * Sliders tune the effect (see below).
  * Byte mode (experimental) saves a frame as a JPEG, corrupts its bytes and shows the result for a few frames, either every N frames or on beats. Louder sound means more damage. Only the sliders the chosen mode uses are shown. They're saved with presets, but the mode isn't.
  * Debug (top right) shows the frame rate and, with byte mode on, how long each step takes. On beats it also shows how loud the bass is and what a beat needs, to help set the beat sliders.
- * Upload your own video and audio. Uploads aren't saved with presets.
+ * Upload your own video and audio. The last ones you uploaded are kept in the browser and come back when the page reloads. They aren't saved with presets. Use default media goes back to the included files.
  * Presets save your slider settings under a name (letters, numbers, underscores and spaces only) in localStorage.
  * Starter presets are included, and the dropdown reopens on the last preset you chose or saved.
 

@@ -3,11 +3,14 @@ import {
 } from "./presets.js";
 import { videoDrawRect } from "./videoRect.js";
 import { beatDetector, glitchFrame } from "./byteMode.js";
+import { clearMedia, loadMedia, saveMedia } from "./mediaStore.js";
 
+//the files bundled in public/, played until something is uploaded
+const defaultMedia = { video: "video.mp4", audio: "audio.mp3" };
 const audio1 = document.getElementById("audio");
-audio1.src = "audio.mp3";
+audio1.src = defaultMedia.audio;
 const video1 = document.getElementById("video");
-video1.src = "video.mp4";
+video1.src = defaultMedia.video;
 
 //iOS zooms in on focused text fields and doesn't zoom back out. maximum-scale stops that, and
 //iOS Safari ignores it for pinch zoom. other browsers (Android Chrome) would block pinch zoom
@@ -363,26 +366,73 @@ function resumePlaying() {
   if (playing.video) video1.play();
 }
 
-//swaps in an uploaded "video" or "audio" file
+//swaps in an uploaded "video" or "audio" file, and keeps it for the next visit
 function updateDisplay(files, type) {
   //an empty list means the picker was cancelled. the accept attribute is only a hint,
   //so check the file's type here too
   if (files == null || files.length == 0 || !files[0].type.startsWith(type + "/")) {
     return;
   }
+  useMedia(type, files[0], files[0].name);
+  //if it can't be kept (storage full or blocked), it still plays until the page closes
+  saveMedia(type, files[0]).catch(() => {});
+}
 
-  const objectURL = URL.createObjectURL(files[0]);
+//plays a file (Blob) as the "video" or "audio" in place of the current one
+function useMedia(type, blob, name) {
+  playMedia(type, URL.createObjectURL(blob), name);
+}
+
+//plays the file at src as the "video" or "audio", revoking the last upload's URL
+function playMedia(type, src, name) {
   URL.revokeObjectURL(settings[type + "Src"]);
-  media[type].src = objectURL;
+  media[type].src = src;
   if (type == "video") {
-    videoFocus = null;
+    //defaultVideoFocus only fits the bundled video; uploads are cropped around the center
+    videoFocus = src == defaultMedia.video ? defaultVideoFocus : null;
   }
-  settings[type + "Src"] = objectURL;
-  settings[type + "Name"] = files[0].name;
+  settings[type + "Src"] = src;
+  settings[type + "Name"] = name;
 
   media[type].load();
-  applyPlaying(type);
+  if (document.getElementById("startOverlay").classList.contains("hidden")) {
+    applyPlaying(type);
+  } else if (type == "video") {
+    //before the start click only muted video may play (audio waits for startFromOverlay)
+    video1.play().catch(() => {});
+  }
   populateStorage();
+}
+
+//brings back the files uploaded on an earlier visit. the names shown are then the files
+//actually playing, whatever the last preset was saved with
+async function restoreMedia() {
+  for (const type of ["video", "audio"]) {
+    let saved;
+    try {
+      saved = await loadMedia(type);
+    } catch (e) {
+      //storage is blocked or broken, so the bundled file stays
+    }
+    if (saved) {
+      useMedia(type, saved.blob, saved.name);
+    } else {
+      settings[type + "Name"] = defaultMedia[type];
+    }
+  }
+  populateStorage();
+  updateFavoriteLabels();
+}
+
+//goes back to the bundled video and audio, and forgets the uploads
+function useDefaultMedia() {
+  for (const type of ["video", "audio"]) {
+    playMedia(type, defaultMedia[type], defaultMedia[type]);
+    //so picking the same file again still counts as a change
+    document.getElementById(type + "Upload").value = "";
+  }
+  updateFavoriteLabels();
+  clearMedia().catch(() => {});
 }
 
 /* Local storage for presets*/
@@ -526,6 +576,7 @@ function bindControls() {
   });
   document.getElementById("videoUpload").addEventListener("input", e => updateDisplay(e.target.files, "video"));
   document.getElementById("audioUpload").addEventListener("input", e => updateDisplay(e.target.files, "audio"));
+  document.getElementById("defaultMedia").addEventListener("click", useDefaultMedia);
   document.querySelector('button[name="favoriteButton"]').addEventListener("click", () => withPresetName(addFavorite));
   document.querySelector('button[name="deleteButton"]').addEventListener("click", () => withPresetName(deleteFavorite));
   document.getElementById("presetSelect").addEventListener("input", e => {
@@ -682,6 +733,7 @@ window.onload = async () => {
   //session that never picked a preset
   const lastPreset = localStorage.getItem(lastPresetKey);
   setToFavorite(lastPreset != null && localStorage.getItem(lastPreset) != null ? lastPreset : "current");
+  await restoreMedia();
   animate();
   await seedStarterPresets();
   loadSelections();
