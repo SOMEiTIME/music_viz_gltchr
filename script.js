@@ -152,11 +152,19 @@ function paintMirroredBars(context, rect) {
   whether it's fast enough is still being tested
 */
 let byteMode = "off"; //"off", "frames" (every erodeEvery frames) or "beats"
-const isBeat = beatDetector();
+let isBeat = beatDetector(); //fed only in "beats", and started afresh each time it's chosen
 let frameCount = 0;
 let erodeBusy = false; //one frame is glitched at a time; triggers while busy are skipped
 let erodedFrame = null; //the last glitched frame: { bitmap, framesLeft }
 const erodeWorker = new Worker(new URL("./erodeWorker.js", import.meta.url), { type: "module" });
+//a worker that fails to load or crashes never replies, so byte mode stops glitching rather
+//than waiting on it, and the readout says so
+let erodeWorkerFailed = false;
+let rejectErode = null; //fails the glitch waiting on the worker, if any
+erodeWorker.addEventListener("error", e => {
+  erodeWorkerFailed = true;
+  rejectErode?.(new Error(`byte mode's worker failed: ${e.message || "it didn't load"}`));
+});
 //totals since byte mode last changed, so the readout averages over the whole run rather than
 //one second. slowestFps is the worst full second's frame rate, slowestFrame the longest gap
 //between two frames and slowestAnimate the longest animate() call, both in ms. loudestBass
@@ -180,8 +188,9 @@ async function erodeFrame(level) {
       resizeHeight: Math.max(1, Math.round(canvas.height * settings.erodeScale)),
     });
     const snapshot = performance.now() - start;
-    const { bitmap, encode, glitch, decode } = await new Promise(resolve => {
+    const { bitmap, encode, glitch, decode } = await new Promise((resolve, reject) => {
       erodeWorker.onmessage = e => resolve(e.data);
+      rejectErode = reject;
       erodeWorker.postMessage({
         frame, level, damage: settings.erodeDamage, width: canvas.width, height: canvas.height,
       }, [frame]);
@@ -200,6 +209,7 @@ async function erodeFrame(level) {
     }
   } finally {
     erodeBusy = false;
+    rejectErode = null;
   }
 }
 
@@ -208,15 +218,16 @@ function drawByteMode() {
   frameCount++;
   byteStats.frames++;
   byteStats.secondFrames++;
-  const level = Math.max(soundDataArray[0], soundDataArray[1]);
-  const bass = bassLevel();
-  //no new beat while the last glitch is still on screen
-  const beat = isBeat(bass, { ratio: settings.beatJump, minLevel: beatFloor(), rest: settings.erodeHold });
-  if (beat) byteStats.beats++;
-  byteStats.loudestBass = Math.max(byteStats.loudestBass, bass);
-  const trigger = byteMode == "frames" ? frameCount % settings.erodeEvery == 0 : byteMode == "beats" && beat;
-  if (trigger && !erodeBusy) {
-    erodeFrame(level);
+  let trigger = byteMode == "frames" && frameCount % settings.erodeEvery == 0;
+  if (byteMode == "beats") {
+    const bass = bassLevel();
+    //no new beat while the last glitch is still on screen
+    trigger = isBeat(bass, { ratio: settings.beatJump, minLevel: beatFloor(), rest: settings.erodeHold });
+    if (trigger) byteStats.beats++;
+    byteStats.loudestBass = Math.max(byteStats.loudestBass, bass);
+  }
+  if (trigger && !erodeBusy && !erodeWorkerFailed) {
+    erodeFrame(Math.max(soundDataArray[0], soundDataArray[1])).catch(console.error);
   }
 
   if (erodedFrame && erodedFrame.framesLeft > 0) {
@@ -260,12 +271,13 @@ function showByteStats(stats, now) {
     ` ${(stats.beats * 1000 / elapsed).toFixed(1)} beats/s. Loudest bass this second ` +
     `${stats.loudestBass.toFixed(0)}, average ${average.toFixed(0)}: a beat needs above ` +
     `${Math.max(beatFloor(), average * settings.beatJump).toFixed(0)}.`;
-  //with byte mode off, the frame rate alone is the baseline to compare against
-  document.getElementById("byteStats").textContent = byteMode == "off" ? fps :
-    `${fps}.${beats} ${perSecond(stats.eroded)} glitched/s, ` +
+  const glitches = erodeWorkerFailed ? " Byte mode stopped: its worker failed (see the console)." :
+    `${beats} ${perSecond(stats.eroded)} glitched/s, ` +
     `${stats.failed}/${stats.eroded} failed to decode. ` +
     `ms per glitch: encode ${mean(stats.encode)}, glitch ${mean(stats.glitch)}, ` +
     `decode ${mean(stats.decode)}, draw ${mean(stats.draw, stats.draws)} per frame`;
+  //with byte mode off, the frame rate alone is the baseline to compare against
+  document.getElementById("byteStats").textContent = byteMode == "off" ? fps : `${fps}.${glitches}`;
 }
 
 //animate
@@ -546,6 +558,7 @@ function bindControls() {
   byteModeSelect.addEventListener("input", () => {
     setByteMode(byteModeSelect.value);
     byteStats = emptyStats();
+    isBeat = beatDetector();
   });
   //browsers can restore the select's last value on reload, so start from it
   setByteMode(byteModeSelect.value);
