@@ -8,6 +8,8 @@ import { createRandom, randomSeed } from './prng.js';
 import { lineOps, byteOps } from './ops.js';
 import { checkOperations, checkSettings } from './check.js';
 
+export { jpegScanStart } from './jpeg.js';
+
 export const DEFAULT_HEADER_LENGTH = 15;  // lines line operations leave alone
 export const DEFAULT_HEADER_BYTES = 1024; // bytes byte operations leave alone
 

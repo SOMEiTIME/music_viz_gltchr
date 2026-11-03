@@ -1,21 +1,6 @@
 //byte mode: DOM-free helpers for corrupting JPEG-encoded frames with Media-Eroder's core.
 //eroder/ is a copy of Media-Eroder's src/core/ (see CLAUDE.md), so don't edit it here
-import { glitch } from "./eroder/index.js";
-
-//offset of the first byte after a JPEG's start-of-scan header (FF DA and its segment),
-//where the compressed picture starts. everything before it is tables the decoder needs,
-//so it's left alone. returns null if there's no start of scan
-export function jpegScanStart(bytes) {
-  let i = 2; //skip the FF D8 start-of-image marker
-  while (i + 3 < bytes.length) {
-    if (bytes[i] != 0xff) return null;
-    const marker = bytes[i + 1];
-    const length = (bytes[i + 2] << 8) | bytes[i + 3]; //counts its own two bytes
-    if (marker == 0xda) return i + 2 + length;
-    i += 2 + length;
-  }
-  return null;
-}
+import { glitch, jpegScanStart } from "./eroder/index.js";
 
 //operations for one frame. louder sound (0 to 255) and more damage mean more corruption
 export function frameOperations(level, damage = 1) {
