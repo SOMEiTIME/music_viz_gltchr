@@ -37,6 +37,10 @@ const offscreenContext = offscreenCanvas.getContext("2d", { willReadFrequently: 
 //since the browser can block autoplay
 const playing = { audio: true, video: true };
 const media = { audio: audio1, video: video1 };
+const startOverlay = document.getElementById("startOverlay");
+//true once the start overlay has been clicked, so audio is allowed to play
+const started = () => startOverlay.classList.contains("hidden");
+const touchscreen = window.matchMedia("(pointer: coarse)");
 //muted video is allowed to autoplay, so the first frame shows behind the start overlay.
 //audio waits for the overlay click (see startFromOverlay)
 video1.play().catch(() => {});
@@ -79,6 +83,7 @@ function bassLevel() {
   for (let i = 1; i <= bassBins; i++) total += beatDataArray[i];
   return total / bassBins;
 }
+
 //what the visible canvas shows, kept between frames since the bars leave gaps that show
 //the last frame
 let barsImage = new ImageData(canvas.width, canvas.height);
@@ -319,7 +324,7 @@ function resumePlaying() {
 }
 
 //swaps in an uploaded "video" or "audio" file, and keeps it for the next visit
-function updateDisplay(files, type) {
+function uploadMedia(files, type) {
   //an empty list means the picker was cancelled. the accept attribute is only a hint,
   //so check the file's type here too
   if (files == null || files.length == 0 || !files[0].type.startsWith(type + "/")) {
@@ -347,7 +352,7 @@ function playMedia(type, src, name) {
   settings[type + "Name"] = name;
 
   media[type].load();
-  if (document.getElementById("startOverlay").classList.contains("hidden")) {
+  if (started()) {
     applyPlaying(type);
   } else if (type == "video") {
     //before the start click only muted video may play (audio waits for startFromOverlay)
@@ -526,8 +531,8 @@ function bindControls() {
   document.querySelectorAll('#sidebarMenu input[type="range"]').forEach(slider => {
     slider.addEventListener("input", () => input(slider.valueAsNumber, slider.id));
   });
-  document.getElementById("videoUpload").addEventListener("input", e => updateDisplay(e.target.files, "video"));
-  document.getElementById("audioUpload").addEventListener("input", e => updateDisplay(e.target.files, "audio"));
+  document.getElementById("videoUpload").addEventListener("input", e => uploadMedia(e.target.files, "video"));
+  document.getElementById("audioUpload").addEventListener("input", e => uploadMedia(e.target.files, "audio"));
   document.getElementById("defaultMedia").addEventListener("click", useDefaultMedia);
   document.querySelector('button[name="favoriteButton"]').addEventListener("click", () => withPresetName(addFavorite));
   document.querySelector('button[name="deleteButton"]').addEventListener("click", () => withPresetName(deleteFavorite));
@@ -561,7 +566,6 @@ function bindSidebarClose() {
   const toggle = document.getElementById("openSidebarMenu");
   const menu = document.getElementById("sidebarMenu");
   const icon = document.querySelector(".sidebarIconToggle");
-  const touchscreen = window.matchMedia("(pointer: coarse)");
 
   //the focused element when a tap begins, since by the time its click fires focus has moved
   let focusedAtTap = null;
@@ -657,13 +661,12 @@ function bindSidebarClose() {
 //on touchscreens, stop the media while the page is in the background and pick up again on return.
 //`playing` holds what the user asked for, so it is left alone and decides what resumes
 function bindBackgroundPause() {
-  const touchscreen = window.matchMedia("(pointer: coarse)");
   document.addEventListener("visibilitychange", () => {
     if (!touchscreen.matches) return;
     if (document.hidden) {
       audio1.pause();
       video1.pause();
-    } else if (document.getElementById("startOverlay").classList.contains("hidden")) {
+    } else if (started()) {
       resumePlaying();
     }
   });
@@ -672,14 +675,14 @@ function bindBackgroundPause() {
 //the click is the user gesture browsers require before audio can run
 function startFromOverlay() {
   resumePlaying();
-  document.getElementById("startOverlay").classList.add("hidden");
+  startOverlay.classList.add("hidden");
 }
 
 window.onload = async () => {
   bindControls();
   bindSidebarClose();
   bindBackgroundPause();
-  document.getElementById("startOverlay").addEventListener("click", startFromOverlay, { once: true });
+  startOverlay.addEventListener("click", startFromOverlay, { once: true });
   //start from the saved version of the last preset, so the dropdown and sliders agree and
   //unsaved slider edits don't carry over a reload. "current" only holds the edits of a
   //session that never picked a preset

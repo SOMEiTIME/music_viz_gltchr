@@ -22,7 +22,7 @@ export function glitchFrame(bytes, level, damage, seed) {
 
 //returns a function that's given the bass level each frame and says whether it's a beat:
 //a jump to `ratio` times the recent average and above `minLevel`, with `rest` frames
-//between beats. the options are passed each frame so sliders take effect straight away
+//between beats. the options are passed each frame so sliders take effect straight away.
 //the function's `average` property is the recent average, for showing while tuning
 export function beatDetector(smoothing = 0.9) {
   let sinceBeat = Infinity;
