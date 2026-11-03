@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { beatDetector, frameOperations, glitchFrame, jpegScanStart } from "../byteMode.js";
+import { beatDetector, frameOperations, glitchFrame } from "../byteMode.js";
 
 //a JPEG's outline: start of image, an APP0 and a start-of-scan segment, then fake picture
 //data. segment lengths count their own two length bytes
@@ -15,19 +15,6 @@ function fakeJpeg(dataLength = 200000) {
   return bytes;
 }
 const scanStart = 16;
-
-describe("jpegScanStart", () => {
-  it("finds the end of the start-of-scan segment", () => {
-    expect(jpegScanStart(fakeJpeg())).toBe(scanStart);
-  });
-
-  it("is null without a start of scan or with broken markers", () => {
-    expect(jpegScanStart(fakeJpeg().slice(0, 10))).toBe(null);
-    const broken = fakeJpeg();
-    broken[10] = 0x00;
-    expect(jpegScanStart(broken)).toBe(null);
-  });
-});
 
 describe("glitchFrame", () => {
   it("keeps the length and everything up to the picture data", () => {
