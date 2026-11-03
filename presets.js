@@ -59,7 +59,7 @@ export const seededKey = "seededPresets";
 export const reservedKeys = ["current", lastPresetKey, seededKey];
 
 export function validPresetName(name) {
-  return name != "" && favoriteRegex.test(name) && !reservedKeys.includes(name);
+  return name !== "" && favoriteRegex.test(name) && !reservedKeys.includes(name);
 }
 
 //the preset names in storage, sorted for the dropdown

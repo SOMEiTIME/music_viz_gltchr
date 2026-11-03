@@ -63,10 +63,14 @@ html, body {
 }
 
 .sidebarMenuInner{
-    margin:20;
-    padding:10;
+    margin: 20px;
+    padding: 10px;
     opacity: 60%;
     line-height: 21px;
+}
+/* the gap quirks mode gave forms, kept since the sidebar's spacing was tuned with it */
+.sidebarMenuInner form {
+    margin-bottom: 1em;
 }
 .sidebarMenuInner:hover {
     opacity: 80%;
@@ -216,6 +220,7 @@ button:hover {
 }
 
 #presetInfoLabel {
+  display: block; /* so its line height sets the row's, as it did in quirks mode */
   line-height: 10px;
   font-size: 20px;
   opacity: 50%;

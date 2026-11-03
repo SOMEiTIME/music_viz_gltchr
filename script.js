@@ -17,7 +17,7 @@ video1.src = defaultMedia.video;
 //iOS Safari ignores it for pinch zoom. other browsers (Android Chrome) would block pinch zoom
 //with it, so it's iOS only. iPads report a Mac user agent, so they're caught by touch points
 const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
-  || (navigator.platform == "MacIntel" && navigator.maxTouchPoints > 1);
+  || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 if (isIOS) {
   const viewport = document.querySelector('meta[name="viewport"]');
   viewport.content += ", maximum-scale=1";
@@ -218,8 +218,8 @@ function drawByteMode() {
   frameCount++;
   byteStats.frames++;
   byteStats.secondFrames++;
-  let trigger = byteMode == "frames" && frameCount % settings.erodeEvery == 0;
-  if (byteMode == "beats") {
+  let trigger = byteMode === "frames" && frameCount % settings.erodeEvery === 0;
+  if (byteMode === "beats") {
     const bass = bassLevel();
     //no new beat while the last glitch is still on screen
     trigger = isBeat(bass, { ratio: settings.beatJump, minLevel: beatFloor(), rest: settings.erodeHold });
@@ -267,7 +267,7 @@ function showByteStats(stats, now) {
     `(animate ${stats.slowestAnimate.toFixed(0)} ms), ${canvas.width}×${canvas.height}`;
   //what a beat needs right now, for tuning Beat Jump and Beat Reactivity
   const average = isBeat.average ?? 0;
-  const beats = byteMode != "beats" ? "" :
+  const beats = byteMode !== "beats" ? "" :
     ` ${(stats.beats * 1000 / elapsed).toFixed(1)} beats/s. Loudest bass this second ` +
     `${stats.loudestBass.toFixed(0)}, average ${average.toFixed(0)}: a beat needs above ` +
     `${Math.max(beatFloor(), average * settings.beatJump).toFixed(0)}.`;
@@ -277,7 +277,7 @@ function showByteStats(stats, now) {
     `ms per glitch: encode ${mean(stats.encode)}, glitch ${mean(stats.glitch)}, ` +
     `decode ${mean(stats.decode)}, draw ${mean(stats.draw, stats.draws)} per frame`;
   //with byte mode off, the frame rate alone is the baseline to compare against
-  document.getElementById("byteStats").textContent = byteMode == "off" ? fps : `${fps}.${glitches}`;
+  document.getElementById("byteStats").textContent = byteMode === "off" ? fps : `${fps}.${glitches}`;
 }
 
 //animate
@@ -339,7 +339,7 @@ function resumePlaying() {
 function uploadMedia(files, type) {
   //an empty list means the picker was cancelled. the accept attribute is only a hint,
   //so check the file's type here too
-  if (files == null || files.length == 0 || !files[0].type.startsWith(type + "/")) {
+  if (files == null || files.length === 0 || !files[0].type.startsWith(type + "/")) {
     return;
   }
   useMedia(type, files[0], files[0].name);
@@ -356,9 +356,9 @@ function useMedia(type, blob, name) {
 function playMedia(type, src, name) {
   URL.revokeObjectURL(settings[type + "Src"]);
   media[type].src = src;
-  if (type == "video") {
+  if (type === "video") {
     //defaultVideoFocus only fits the bundled video; uploads are cropped around the center
-    videoFocus = src == defaultMedia.video ? defaultVideoFocus : null;
+    videoFocus = src === defaultMedia.video ? defaultVideoFocus : null;
   }
   settings[type + "Src"] = src;
   settings[type + "Name"] = name;
@@ -366,7 +366,7 @@ function playMedia(type, src, name) {
   media[type].load();
   if (started()) {
     applyPlaying(type);
-  } else if (type == "video") {
+  } else if (type === "video") {
     //before the start click only muted video may play (audio waits for startFromOverlay)
     video1.play().catch(() => {});
   }
@@ -424,7 +424,7 @@ function updateSettings() {
 function selectPreset(presetName) {
   let presetSelect = document.getElementById("presetSelect");
   presetSelect.value = presetName;
-  if (presetSelect.value == presetName) {
+  if (presetSelect.value === presetName) {
     localStorage.setItem(lastPresetKey, presetName);
   }
 }
@@ -457,13 +457,13 @@ function deleteFavorite(presetName) {
   let message = "Preset: '" + presetName;
   if (localStorage.getItem(presetName) != null) {
     localStorage.removeItem(presetName);
-    if (localStorage.getItem(lastPresetKey) == presetName) {
+    if (localStorage.getItem(lastPresetKey) === presetName) {
       localStorage.removeItem(lastPresetKey);
     }
 
     let presetSelect = document.getElementById("presetSelect");
     for (let i = 0; i < presetSelect.length; i++) {
-      if (presetSelect.options[i].value == presetName) {
+      if (presetSelect.options[i].value === presetName) {
         presetSelect.remove(i);
       }
     }
@@ -481,16 +481,16 @@ function updateFavoriteLabels() {
   document.getElementById("audioName").textContent = audioInfo;
   document.getElementById("videoName").textContent = videoInfo;
   document.getElementById("presetInfoLabel").textContent =
-    videoInfo != "" || audioInfo != "" ? "//preset saved with:" : "";
+    videoInfo !== "" || audioInfo !== "" ? "//preset saved with:" : "";
 }
 
 function setToFavorite(presetName) {
   let newSettings = localStorage.getItem(presetName);
-  if (presetName != "current") {
+  if (presetName !== "current") {
     document.getElementById("presetName").value = presetName;
   }
   if (newSettings != null) {
-    if (presetName != "current") {
+    if (presetName !== "current") {
       localStorage.setItem(lastPresetKey, presetName);
     }
     copySettings(settings, parseStoredSettings(localStorage, presetName));
@@ -550,7 +550,7 @@ function bindControls() {
   document.querySelector('button[name="deleteButton"]').addEventListener("click", () => withPresetName(deleteFavorite));
   document.getElementById("presetSelect").addEventListener("input", e => {
     //the placeholder option has an empty value
-    if (e.target.value != "") {
+    if (e.target.value !== "") {
       setToFavorite(e.target.value);
     }
   });
@@ -565,7 +565,7 @@ function bindControls() {
 
   const debugToggle = document.getElementById("debugToggle");
   debugToggle.addEventListener("click", () => {
-    const show = debugToggle.getAttribute("aria-pressed") != "true";
+    const show = debugToggle.getAttribute("aria-pressed") !== "true";
     debugToggle.setAttribute("aria-pressed", show);
     document.getElementById("byteStats").hidden = !show;
   });
@@ -599,7 +599,7 @@ function bindSidebarClose() {
 
     //tapping the icon label makes the browser re-fire the click on the checkbox itself, which
     //must not count as outside or the menu would close the moment it opened
-    const outside = e.target != toggle && !menu.contains(e.target) && !icon.contains(e.target);
+    const outside = e.target !== toggle && !menu.contains(e.target) && !icon.contains(e.target);
     if (toggle.checked && outside) {
       toggle.checked = false;
     } else if (!toggle.checked && outside && touchscreen.matches && !e.target.closest("#startOverlay")) {
@@ -624,7 +624,7 @@ function bindSidebarClose() {
     mode = null;
     dragging = false;
     offset = 0;
-    if (e.touches.length != 1) return;
+    if (e.touches.length !== 1) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     if (toggle.checked) {
@@ -645,7 +645,7 @@ function bindSidebarClose() {
         mode = null;
         return;
       }
-      const rightway = mode == "close" ? dx < -10 : dx > 10;
+      const rightway = mode === "close" ? dx < -10 : dx > 10;
       if (!rightway || Math.abs(dx) < Math.abs(dy)) return;
       dragging = true;
       menu.style.transition = "none";
@@ -653,8 +653,8 @@ function bindSidebarClose() {
     //stop the browser from also treating the drag as a scroll or back gesture
     e.preventDefault();
     const width = menu.offsetWidth;
-    offset = mode == "close" ? Math.min(0, dx) : Math.min(width, Math.max(0, dx));
-    const position = mode == "close" ? offset : offset - width;
+    offset = mode === "close" ? Math.min(0, dx) : Math.min(width, Math.max(0, dx));
+    const position = mode === "close" ? offset : offset - width;
     menu.style.transform = `translateX(${position}px)`;
   }, { passive: false });
 
@@ -663,8 +663,8 @@ function bindSidebarClose() {
     dragging = false;
     menu.style.transition = "";
     menu.style.transform = "";
-    if (mode == "close" && offset < -60) toggle.checked = false;
-    if (mode == "open" && offset > 60) toggle.checked = true;
+    if (mode === "close" && offset < -60) toggle.checked = false;
+    if (mode === "open" && offset > 60) toggle.checked = true;
     mode = null;
   };
   document.addEventListener("touchend", endDrag);
